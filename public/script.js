@@ -596,6 +596,11 @@
     ring.style.strokeDashoffset = "1";
     // Drawn like a pen stroke once the avatar has settled
     animate(1, 0, { duration: 1.4, delay: 0.95, ease: [0.45, 0, 0.25, 1], onUpdate: (v) => { ring.style.strokeDashoffset = String(v); } });
+    // Dashed heart trail: draw the solid mask path so the dashes appear along it
+    const trail = $(".intro__deco .trail-reveal");
+    trail.style.strokeDasharray = "1";
+    trail.style.strokeDashoffset = "1";
+    animate(1, 0, { duration: 1.3, delay: 1.9, ease: [0.45, 0, 0.25, 1], onUpdate: (v) => { trail.style.strokeDashoffset = String(v); } });
     const decos = $$(".intro__deco .deco");
     decos.forEach((d, i) => {
       d.style.transformBox = "fill-box";
