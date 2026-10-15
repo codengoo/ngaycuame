@@ -1,0 +1,16 @@
+{
+  "name": "loi-chuc-gui-me",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Thiệp 20/10 – lời chúc nhỏ con gửi mẹ yêu",
+  "scripts": {
+    "dev": "wrangler dev",
+    "login": "wrangler login",
+    "deploy:worker": "wrangler deploy",
+    "deploy:pages": "wrangler pages deploy public --project-name=loi-chuc-gui-me --branch=main",
+    "deploy": "npm run deploy:worker && npm run deploy:pages"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.0"
+  }
+}

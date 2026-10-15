@@ -1,0 +1,370 @@
+@font-face {
+  font-family: "Fz Fragrant";
+  src: url("fonts/fz-fragrant.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fz Donsky";
+  src: url("fonts/fz-donsky.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fz Yustine Signature";
+  src: url("fonts/fz-yustine-signature.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --rose: #e8587a;
+  --rose-deep: #d9446a;
+  --rose-soft: #f6c9d3;
+  --blush: #fbe3e8;
+  --ink: #4a2c26;
+  --ink-soft: #6b4f49;
+  --muted: #8a7772;
+  --paper: #fdf5ee;
+  --card: rgba(255, 249, 247, 0.82);
+
+  --f-title: "Baloo 2", system-ui, sans-serif;
+  --f-display: "Fz Fragrant", "Baloo 2", cursive;
+  --f-hand: "Patrick Hand", "Comic Sans MS", cursive;
+  --f-body: "Quicksand", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; }
+
+/* Background stretches over the full page height (html box = whole document) */
+html {
+  -webkit-text-size-adjust: 100%;
+  min-height: 100%;
+  background: var(--paper) url("images/nen-doc-20-10.webp") center top / 100% 100% no-repeat;
+}
+
+@media (min-width: 900px) and (min-aspect-ratio: 4/3) {
+  html { background-image: url("images/nen-ngang.webp"); }
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--f-body);
+  color: var(--ink);
+  background: transparent;
+  overflow-x: hidden;
+}
+
+.page {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+  text-align: center;
+}
+
+/* ---------- Like + share (in the sender row) ---------- */
+.page { position: relative; }
+.sender__actions { margin-left: auto; display: flex; align-items: center; gap: 2px; }
+
+.like {
+  width: 44px; height: 44px;
+  border: 0; background: none; cursor: pointer;
+  display: grid; place-items: center;
+}
+.like svg { width: 30px; height: 30px; fill: transparent; stroke: var(--rose); stroke-width: 1.6; transition: fill .25s; }
+.like[aria-pressed="true"] svg { fill: var(--rose); }
+
+.share {
+  width: 44px; height: 44px;
+  border: 0; background: none; cursor: pointer;
+  display: grid; place-items: center;
+}
+.share svg { width: 26px; height: 26px; fill: none; stroke: var(--rose); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  margin: 4px auto 0;
+  width: min(100%, 440px);
+}
+.hero__girl {
+  display: block;
+  width: 78%;
+  margin: 0 auto 0 6%;
+  height: auto;
+  transform-origin: 50% 90%;
+  -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 82%, transparent 100%);
+}
+.hero__note {
+  position: absolute;
+  right: -4px;
+  top: 12%;
+  font-family: "Fz Yustine Signature", var(--f-hand);
+  color: var(--rose);
+  font-size: clamp(1.8rem, 7.6vw, 2.5rem);
+  -webkit-text-stroke: .5px currentColor;
+  line-height: 1.15;
+  rotate: -12deg;
+  text-align: left;
+}
+.hero__note-line { display: block; width: 110px; margin-top: 2px; }
+
+.float-heart {
+  position: absolute;
+  color: var(--rose);
+  line-height: 1;
+}
+.float-heart.h1 { left: 12%; top: 22%; font-size: 2rem; rotate: -14deg; }
+.float-heart.h2 { left: 6%;  top: 45%; font-size: .9rem; opacity: .7; }
+.float-heart.h3 { right: 22%; top: 4%; font-size: .8rem; opacity: .6; }
+
+.spark {
+  position: absolute; width: 3px; height: 16px; border-radius: 3px;
+  background: var(--rose-soft);
+}
+.spark.s1 { left: 18%; top: 62%; rotate: -50deg; }
+.spark.s2 { left: 15%; top: 68%; rotate: -70deg; height: 10px; }
+.spark.s3 { right: 22%; top: 30%; rotate: 35deg; }
+
+/* ---------- Date band ---------- */
+.date-band {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: -6px;
+  padding: 2px 46px;
+}
+.date-band::before {
+  content: "";
+  position: absolute;
+  inset: 6px -10px;
+  z-index: -1;
+  background: linear-gradient(90deg, transparent, var(--blush) 12%, #f8d3db 50%, var(--blush) 88%, transparent);
+  border-radius: 40% 60% 45% 55% / 60% 40% 60% 40%;
+  filter: blur(1.5px);
+}
+.date-band__text {
+  font-family: "Fz Donsky", var(--f-title);
+  font-weight: 400;
+  font-size: clamp(2.9rem, 12.5vw, 3.8rem);
+  line-height: 1.2;
+  color: var(--rose);
+  letter-spacing: .02em;
+}
+.mini-flower { width: 22px; height: 30px; }
+
+/* ---------- Headline ---------- */
+.headline {
+  margin-top: 18px;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0, "dlig" 0;
+  font-size: clamp(1.75rem, 7.4vw, 2.5rem);
+  line-height: 1.2;
+  color: var(--ink);
+}
+.headline { position: relative; }
+.headline .hc { display: inline-block; }
+.headline__heart { color: var(--rose); font-size: .85em; display: inline-block; }
+
+.lead {
+  margin-top: 14px;
+  font-family: var(--f-hand);
+  font-size: clamp(1.15rem, 4.6vw, 1.4rem);
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.lead__last { position: relative; display: inline-block; padding-bottom: 6px; }
+.lead__line {
+  position: absolute; left: -8%; bottom: -4px;
+  width: 96%; height: auto;
+  overflow: visible;
+}
+.lead__line path {
+  fill: none;
+  stroke: var(--rose);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+}
+.lead__heart { color: var(--rose); display: inline-block; }
+
+/* ---------- Card ---------- */
+.card {
+  position: relative;
+  margin-top: 28px;
+  padding: 24px 22px 22px;
+  text-align: left;
+  background: var(--card);
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, .9);
+  box-shadow: 0 14px 40px rgba(201, 120, 135, .16), 0 2px 6px rgba(201, 120, 135, .08);
+  -webkit-backdrop-filter: blur(6px);
+          backdrop-filter: blur(6px);
+}
+
+.player { display: flex; align-items: center; gap: 14px; }
+
+.play {
+  flex: none;
+  width: 66px; height: 66px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  background: var(--rose);
+  box-shadow: 0 6px 16px rgba(232, 88, 122, .35);
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: transform .15s, background .2s;
+}
+.play:hover { background: var(--rose-deep); }
+.play:active { transform: scale(.94); }
+.play svg { width: 28px; height: 28px; fill: #fff; }
+.play .icon-play { margin-left: 3px; }
+.play .icon-pause { display: none; }
+.play.is-playing .icon-play { display: none; }
+.play.is-playing .icon-pause { display: block; }
+.play.is-playing { animation: ring 1.8s ease-out infinite; }
+
+/* Two identical bar layers: the fill layer is clipped to the playback position */
+.wave {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  cursor: pointer;
+  outline-offset: 4px;
+  touch-action: none;
+}
+.wave__layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+.wave__fill { clip-path: inset(0 calc(100% - var(--p, 0%)) 0 0); }
+.wave i {
+  flex: 1;
+  min-width: 1px;
+  min-height: 3px;
+  border-radius: 2px;
+  background: var(--rose-soft);
+}
+.wave__fill i { background: var(--rose); }
+
+.time {
+  flex: none;
+  font-family: var(--f-body);
+  font-weight: 500;
+  font-size: .95rem;
+  color: var(--ink-soft);
+  background: rgba(246, 201, 211, .38);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+
+.wish {
+  margin: 20px 0 0;
+  font-family: var(--f-hand);
+  font-size: clamp(1.15rem, 4.4vw, 1.35rem);
+  line-height: 1.5;
+  color: var(--ink);
+}
+/* Lyric reveal: each character is filled left→right up to --f */
+.wish .c {
+  --ink-faint: rgba(74, 44, 38, .2);
+  color: transparent;
+  background: linear-gradient(90deg, var(--ink) var(--f, 100%), var(--ink-faint) var(--f, 100%));
+  -webkit-background-clip: text;
+          background-clip: text;
+}
+
+.sender { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
+.sender__avatar {
+  flex: none;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 3px 10px rgba(201, 120, 135, .25);
+  background: #fde9e2 url("images/be-gai.webp") 50% 26% / 240% auto no-repeat;
+}
+.sender__name { font-family: var(--f-body); font-weight: 600; font-size: .98rem; color: var(--ink-soft); }
+.sender__date { font-family: var(--f-body); font-size: .88rem; color: var(--muted); margin-top: 2px; }
+
+.toast {
+  position: fixed;
+  z-index: 20;
+  left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 6px);
+  width: max-content; max-width: 92%;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--f-body);
+  font-size: .85rem;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s, transform .25s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- Footer ---------- */
+.thanks { margin-top: 34px; color: var(--rose); }
+.thanks__rule { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.thanks__rule span { width: 72px; height: 2px; border-radius: 2px; background: var(--rose-soft); }
+.thanks__rule b, .thanks__heart { font-size: 1.3rem; line-height: 1; }
+.thanks p {
+  font-family: "Fz Yustine Signature", var(--f-hand);
+  font-size: clamp(1.7rem, 7vw, 2.3rem);
+  -webkit-text-stroke: .5px currentColor;
+  line-height: 1.3;
+  margin: 8px 0 4px;
+  rotate: -1.5deg;
+}
+.thanks__heart { display: inline-block; }
+
+/* ---------- Heart rain ---------- */
+.rain { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 10; }
+.rain span {
+  position: absolute;
+  top: -40px;
+  color: var(--rose);
+}
+
+/* ---------- Animations ---------- */
+@keyframes ring {
+  0% { box-shadow: 0 6px 16px rgba(232, 88, 122, .35), 0 0 0 0 rgba(232, 88, 122, .35); }
+  100% { box-shadow: 0 6px 16px rgba(232, 88, 122, .35), 0 0 0 18px rgba(232, 88, 122, 0); }
+}
+
+@media (max-width: 380px) {
+  .card { padding: 20px 16px; }
+  .play { width: 56px; height: 56px; }
+  .time { padding: 5px 9px; font-size: .85rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Motion initial state ---------- */
+/* Elements start hidden; script.js animates them in (or removes .anim if Motion is unavailable). */
+.anim [data-a],
+.anim #headline,
+.anim #lead { opacity: 0; }
+.headline .w,
+.lead .w { display: inline-block; white-space: pre; }
+.wave i { transform-origin: 50% 50%; }
