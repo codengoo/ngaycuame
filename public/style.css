@@ -468,7 +468,7 @@ html.intro-open body { overflow: hidden; }
   overflow: visible;
   pointer-events: none;
 }
-.intro__deco .deco-ring { fill: none; stroke: #f088a3; stroke-width: 2.6; }
+.intro__deco .deco-ring { fill: none; stroke: #f088a3; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
 .intro__deco .outlined { stroke: #fff; stroke-width: 2.2; paint-order: stroke; }
 .intro__deco .soft { fill: #f6a8bb; }
 .intro__deco .gold { fill: #f4c55f; }

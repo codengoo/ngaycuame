@@ -592,10 +592,10 @@
     setTimeout(() => { if (!introClosed) burst(portrait, 14); }, 650);
     // Doodles around the avatar pop in one by one, then drift gently
     const ring = $(".intro__deco .deco-ring");
-    ring.setAttribute("pathLength", "1");
     ring.style.strokeDasharray = "1";
     ring.style.strokeDashoffset = "1";
-    animate(1, 0, { duration: 1, delay: 0.5, ease: "easeInOut", onUpdate: (v) => { ring.style.strokeDashoffset = String(v); } });
+    // Drawn like a pen stroke once the avatar has settled
+    animate(1, 0, { duration: 1.4, delay: 0.95, ease: [0.45, 0, 0.25, 1], onUpdate: (v) => { ring.style.strokeDashoffset = String(v); } });
     const decos = $$(".intro__deco .deco");
     decos.forEach((d, i) => {
       d.style.transformBox = "fill-box";
