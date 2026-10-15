@@ -300,6 +300,16 @@ body {
   background: #fde9e2 url("images/be-gai.webp") 50% 26% / 240% auto no-repeat;
 }
 .sender__name { font-family: var(--f-body); font-weight: 600; font-size: .98rem; color: var(--ink-soft); }
+.sender__nick {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 1.2em;
+  white-space: nowrap;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0, "dlig" 0;
+  color: var(--rose);
+  line-height: 1;
+}
 .sender__date { font-family: var(--f-body); font-size: .88rem; color: var(--muted); margin-top: 2px; }
 
 .toast {
