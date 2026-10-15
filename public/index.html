@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi">
+<html lang="vi" class="intro-open">
         </div>
 <head>
   <meta charset="utf-8">
@@ -72,6 +72,23 @@
   <script>document.documentElement.classList.add("anim")</script>
 </head>
 <body>
+  <!-- Intro splash: shown first, dismissed with the button -->
+  <div class="intro" id="intro" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+    <div class="intro__rays" aria-hidden="true"></div>
+    <div class="intro__stars" id="introStars" aria-hidden="true"></div>
+    <div class="intro__hearts" id="introHearts" aria-hidden="true"></div>
+    <div class="intro__content" id="introContent">
+      <div class="intro__portrait" data-i>
+        <span class="intro__ring" aria-hidden="true"></span>
+        <img src="images/be-gai.webp" width="760" height="624" alt="">
+      </div>
+      <p class="intro__date" data-i>20/10</p>
+      <h2 class="intro__title" id="introTitle">Một lời chúc nhỏ</h2>
+      <p class="intro__from" data-i>của bé Tấn Phát gửi mẹ yêu</p>
+      <button class="intro__open" id="introOpen" type="button" data-i>Mở lời chúc <span aria-hidden="true">♥</span></button>
+    </div>
+  </div>
+
   <main class="page">
     <!-- Hero -->
     <section class="hero" id="hero">

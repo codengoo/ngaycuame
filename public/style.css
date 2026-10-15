@@ -347,7 +347,7 @@ body {
 .thanks__heart { display: inline-block; }
 
 /* ---------- Heart rain ---------- */
-.rain { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 10; }
+.rain { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 110; }
 .rain span {
   position: absolute;
   top: -40px;
@@ -378,3 +378,173 @@ body {
 .headline .w,
 .lead .w { display: inline-block; white-space: pre; }
 .wave i { transform-origin: 50% 50%; }
+
+/* ---------- Intro splash ---------- */
+html.intro-open body { overflow: hidden; }
+
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 38%, #fffaf6 0%, #fde6ea 42%, #f6c3d0 100%);
+}
+.intro[hidden] { display: none; }
+
+/* Slowly turning light rays behind everything */
+.intro__rays {
+  position: absolute;
+  left: 50%; top: 38%;
+  width: 180vmax; height: 180vmax;
+  translate: -50% -50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, .55) 0deg 6deg, transparent 6deg 18deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 55%);
+          mask-image: radial-gradient(circle, #000 0%, transparent 55%);
+  animation: spin 40s linear infinite;
+  opacity: .7;
+}
+
+/* Twinkling four-point stars (positions set in script.js) */
+.intro__stars span {
+  position: absolute;
+  width: var(--s, 12px); height: var(--s, 12px);
+  background: var(--c, #fff);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, .9));
+  animation: twinkle var(--d, 2s) ease-in-out var(--delay, 0s) infinite;
+}
+
+/* Hearts drifting up from the bottom */
+.intro__hearts span {
+  position: absolute;
+  bottom: -40px;
+  color: var(--rose);
+  animation: rise var(--d, 7s) linear forwards;
+}
+
+.intro__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.intro__portrait {
+  position: relative;
+  width: clamp(150px, 42vw, 200px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #fff 0%, #fde9e2 70%);
+  border: 5px solid #fff;
+  box-shadow: 0 0 0 8px rgba(255, 255, 255, .45), 0 18px 50px rgba(232, 88, 122, .35);
+  animation: glow 2.4s ease-in-out infinite;
+}
+.intro__portrait img {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 30%;
+}
+.intro__ring {
+  position: absolute;
+  inset: -18px;
+  border-radius: 50%;
+  border: 2px dashed rgba(232, 88, 122, .45);
+  animation: spin 18s linear infinite;
+}
+.intro__ring::before,
+.intro__ring::after {
+  content: "♥";
+  position: absolute;
+  color: var(--rose);
+  font-size: 18px;
+  line-height: 1;
+}
+.intro__ring::before { top: -10px; left: 50%; translate: -50% 0; }
+.intro__ring::after { bottom: -10px; left: 50%; translate: -50% 0; }
+
+.intro__date {
+  margin-top: 28px;
+  font-family: "Fz Donsky", var(--f-title);
+  font-size: clamp(2rem, 9vw, 2.8rem);
+  line-height: 1;
+  color: var(--rose);
+}
+
+/* Title with a light sweep running across the letters */
+.intro__title {
+  margin-top: 6px;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0, "dlig" 0;
+  font-size: clamp(2.3rem, 10.5vw, 3.4rem);
+  line-height: 1.15;
+  color: var(--ink);
+  background: linear-gradient(110deg, var(--ink) 0%, var(--ink) 42%, #fff 50%, var(--ink) 58%, var(--ink) 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3.2s ease-in-out 1.6s infinite;
+}
+.intro__title .ic { display: inline-block; white-space: pre; }
+
+.intro__from {
+  margin-top: 6px;
+  font-family: "Fz Yustine Signature", var(--f-hand);
+  font-size: clamp(1.7rem, 7vw, 2.2rem);
+  -webkit-text-stroke: .5px currentColor;
+  color: var(--rose);
+}
+
+.intro__open {
+  margin-top: 30px;
+  padding: 14px 30px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f0708f, var(--rose-deep));
+  color: #fff;
+  font-family: var(--f-body);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: .02em;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(217, 68, 106, .4);
+  animation: pulse 1.8s ease-out infinite;
+}
+.intro__open span { display: inline-block; margin-left: 4px; }
+.intro__open:hover { filter: brightness(1.05); }
+.intro__open:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+@keyframes spin { to { rotate: 360deg; } }
+@keyframes twinkle {
+  0%, 100% { opacity: .15; scale: .4; }
+  50% { opacity: 1; scale: 1; }
+}
+@keyframes rise {
+  0% { transform: translate(0, 0) rotate(0); opacity: 0; }
+  10% { opacity: var(--o, .8); }
+  100% { transform: translate(var(--x, 0px), -110vh) rotate(var(--r, 20deg)); opacity: 0; }
+}
+@keyframes glow {
+  50% { box-shadow: 0 0 0 14px rgba(255, 255, 255, .3), 0 18px 60px rgba(232, 88, 122, .5); }
+}
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  60%, 100% { background-position: 0 0; }
+}
+@keyframes pulse {
+  0% { box-shadow: 0 10px 26px rgba(217, 68, 106, .4), 0 0 0 0 rgba(232, 88, 122, .45); }
+  100% { box-shadow: 0 10px 26px rgba(217, 68, 106, .4), 0 0 0 22px rgba(232, 88, 122, 0); }
+}
+
+.anim .intro [data-i],
+.anim .intro__title { opacity: 0; }

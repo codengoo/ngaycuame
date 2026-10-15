@@ -4,8 +4,9 @@
   const useMotion = !!M && !reduceMotion;
 
   // ----- Momentum (inertia) scrolling -----
+  let lenis = null;
   if (window.Lenis && !reduceMotion) {
-    const lenis = new window.Lenis({ lerp: 0.08, wheelMultiplier: 1, smoothWheel: true });
+    lenis = new window.Lenis({ lerp: 0.08, wheelMultiplier: 1, smoothWheel: true });
     const raf = (t) => { lenis.raf(t); requestAnimationFrame(raf); };
     requestAnimationFrame(raf);
   }
@@ -169,6 +170,7 @@
   const spring = (bounce = 0.4, duration = 0.8) => ({ type: "spring", bounce, duration });
   const loop = (duration, extra = {}) => ({ duration, repeat: Infinity, repeatType: "mirror", ease: "easeInOut", ...extra });
 
+  let playEntrance = () => {};
   if (useMotion) {
     const { animate, stagger, inView, scroll } = M;
 
@@ -177,84 +179,87 @@
     [...words, ...leadWords].forEach((w) => { w.style.opacity = "0"; });
     document.documentElement.classList.remove("anim");
 
-    // --- Hero entrance ---
-    const girlWrap = $(".hero__girl-wrap");
-    animate(girlWrap, { opacity: [0, 1], scale: [0.6, 1], y: [50, 0] }, spring(0.45, 1));
-    animate($(".hero__girl"), { rotate: [-1.4, 1.4], y: [0, -5] }, loop(2.6, { delay: 1 }));
+    // Entrance runs once the intro splash is dismissed
+    playEntrance = () => {
+      // --- Hero entrance ---
+      const girlWrap = $(".hero__girl-wrap");
+      animate(girlWrap, { opacity: [0, 1], scale: [0.6, 1], y: [50, 0] }, spring(0.45, 1));
+      animate($(".hero__girl"), { rotate: [-1.4, 1.4], y: [0, -5] }, loop(2.6, { delay: 1 }));
 
-    $$(".float-heart").forEach((h, i) => {
-      const target = [1, 0.7, 0.6][i];
-      animate(h, { opacity: [0, target], scale: [0, 1] }, { ...spring(0.6, 0.7), delay: 0.5 + i * 0.12 });
-      animate(h, { y: [0, -10 - i * 3], x: [0, i % 2 ? 4 : -4] }, loop(2 + i * 0.6, { delay: 1 + i * 0.2 }));
-    });
+      $$(".float-heart").forEach((h, i) => {
+        const target = [1, 0.7, 0.6][i];
+        animate(h, { opacity: [0, target], scale: [0, 1] }, { ...spring(0.6, 0.7), delay: 0.5 + i * 0.12 });
+        animate(h, { y: [0, -10 - i * 3], x: [0, i % 2 ? 4 : -4] }, loop(2 + i * 0.6, { delay: 1 + i * 0.2 }));
+      });
 
-    animate(".spark", { opacity: [0, 1], scale: [0, 1] }, { ...spring(0.5, 0.6), delay: stagger(0.08, { startDelay: 0.7 }) });
-    animate(".spark", { opacity: [1, 0.35] }, loop(1.2, { delay: stagger(0.3, { startDelay: 1.5 }) }));
+      animate(".spark", { opacity: [0, 1], scale: [0, 1] }, { ...spring(0.5, 0.6), delay: stagger(0.08, { startDelay: 0.7 }) });
+      animate(".spark", { opacity: [1, 0.35] }, loop(1.2, { delay: stagger(0.3, { startDelay: 1.5 }) }));
 
-    const note = $(".hero__note");
-    animate(note, { opacity: [0, 1], scale: [0.4, 1], x: [30, 0] }, { ...spring(0.5, 0.8), delay: 0.85 });
-    const line = $(".hero__note-line .draw");
-    const len = line.getTotalLength();
-    line.style.strokeDasharray = String(len);
-    line.style.strokeDashoffset = String(len);
-    animate(len, 0, {
-      duration: 0.7, delay: 1.3, ease: "easeOut",
-      onUpdate: (v) => { line.style.strokeDashoffset = String(v); },
-    });
-    const noteHeart = $(".hero__note-line .note-heart");
-    noteHeart.style.transformBox = "fill-box";
-    noteHeart.style.transformOrigin = "center";
-    animate(noteHeart, { scale: [0, 1.4, 1] }, { duration: 0.5, delay: 1.9 });
+      const note = $(".hero__note");
+      animate(note, { opacity: [0, 1], scale: [0.4, 1], x: [30, 0] }, { ...spring(0.5, 0.8), delay: 0.85 });
+      const line = $(".hero__note-line .draw");
+      const len = line.getTotalLength();
+      line.style.strokeDasharray = String(len);
+      line.style.strokeDashoffset = String(len);
+      animate(len, 0, {
+        duration: 0.7, delay: 1.3, ease: "easeOut",
+        onUpdate: (v) => { line.style.strokeDashoffset = String(v); },
+      });
+      const noteHeart = $(".hero__note-line .note-heart");
+      noteHeart.style.transformBox = "fill-box";
+      noteHeart.style.transformOrigin = "center";
+      animate(noteHeart, { scale: [0, 1.4, 1] }, { duration: 0.5, delay: 1.9 });
 
 
-    // --- Date + headline + lead ---
-    animate(".date-band", { opacity: [0, 1], scale: [0.5, 1] }, { ...spring(0.55, 0.8), delay: 0.95 });
-    $$(".mini-flower").forEach((f, i) => {
-      f.style.transformOrigin = "50% 100%";
-      animate(f, { rotate: i ? [8, -8] : [-8, 8] }, loop(1.6, { delay: 1.4 }));
-    });
+      // --- Date + headline + lead ---
+      animate(".date-band", { opacity: [0, 1], scale: [0.5, 1] }, { ...spring(0.55, 0.8), delay: 0.95 });
+      $$(".mini-flower").forEach((f, i) => {
+        f.style.transformOrigin = "50% 100%";
+        animate(f, { rotate: i ? [8, -8] : [-8, 8] }, loop(1.6, { delay: 1.4 }));
+      });
 
-    headline.style.opacity = "1";
-    animate(words, { opacity: [0, 1], y: [28, 0], filter: ["blur(6px)", "blur(0px)"] },
-      { duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: stagger(0.07, { startDelay: 1.15 }) });
+      headline.style.opacity = "1";
+      animate(words, { opacity: [0, 1], y: [28, 0], filter: ["blur(6px)", "blur(0px)"] },
+        { duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: stagger(0.07, { startDelay: 1.15 }) });
 
-    const beat = (el, delay = 0) =>
-      animate(el, { scale: [1, 1.25, 1, 1.12, 1] }, { duration: 1.2, repeat: Infinity, repeatDelay: 0.5, delay });
-    beat($(".headline__heart"), 2);
+      const beat = (el, delay = 0) =>
+        animate(el, { scale: [1, 1.25, 1, 1.12, 1] }, { duration: 1.2, repeat: Infinity, repeatDelay: 0.5, delay });
+      beat($(".headline__heart"), 2);
 
-    // "Words pull up": each word rises 20px and fades in, one after another
-    lead.style.opacity = "1";
-    animate(leadWords, { y: [20, 0] }, { type: "spring", stiffness: 500, damping: 25, delay: stagger(0.08, { startDelay: 1.7 }) });
-    animate(leadWords, { opacity: [0, 1] }, { duration: 0.35, delay: stagger(0.08, { startDelay: 1.7 }) });
-    const leadDone = 1.7 + leadWords.length * 0.08;
-    // Hand-drawn underline is "drawn" the same way as the hero note line
-    const leadLine = $(".lead__line .draw");
-    leadLine.style.strokeDashoffset = "1";
-    animate(1, 0, {
-      duration: 0.7, delay: leadDone - 0.2, ease: "easeOut",
-      onUpdate: (v) => { leadLine.style.strokeDashoffset = String(v); },
-    });
-    animate(".lead__heart", { scale: [1, 1.3] }, loop(0.7, { delay: leadDone + 0.2 }));
+      // "Words pull up": each word rises 20px and fades in, one after another
+      lead.style.opacity = "1";
+      animate(leadWords, { y: [20, 0] }, { type: "spring", stiffness: 500, damping: 25, delay: stagger(0.08, { startDelay: 1.7 }) });
+      animate(leadWords, { opacity: [0, 1] }, { duration: 0.35, delay: stagger(0.08, { startDelay: 1.7 }) });
+      const leadDone = 1.7 + leadWords.length * 0.08;
+      // Hand-drawn underline is "drawn" the same way as the hero note line
+      const leadLine = $(".lead__line .draw");
+      leadLine.style.strokeDashoffset = "1";
+      animate(1, 0, {
+        duration: 0.7, delay: leadDone - 0.2, ease: "easeOut",
+        onUpdate: (v) => { leadLine.style.strokeDashoffset = String(v); },
+      });
+      animate(".lead__heart", { scale: [1, 1.3] }, loop(0.7, { delay: leadDone + 0.2 }));
 
-    // --- Card: scroll into view ---
-    inView(card, () => {
-      animate(card, { opacity: [0, 1], y: [60, 0], scale: [0.94, 1] }, spring(0.35, 0.9));
-      animate(playBtn, { scale: [0, 1], rotate: [-90, 0] }, { ...spring(0.55, 0.8), delay: 0.25 });
-      animate(bars, { scaleY: [0, 1] }, { duration: 0.45, ease: "easeOut", delay: stagger(0.012, { startDelay: 0.3, from: "center" }) });
-      animate(timeEl, { opacity: [0, 1], x: [16, 0] }, { duration: 0.5, delay: 0.5 });
-      animate(".wish", { opacity: [0, 1], y: [14, 0] }, { duration: 0.6, delay: 0.55 });
-      animate(".sender", { opacity: [0, 1], x: [-24, 0] }, { ...spring(0.4, 0.7), delay: 0.75 });
-      animate("#shareBtn", { scale: [0, 1], y: [10, 0] }, { ...spring(0.6, 0.8), delay: 0.95 });
-      animate(likeBtn, { scale: [0, 1], rotate: [-40, 0] }, { ...spring(0.6, 0.8), delay: 1.05 });
-    }, { amount: 0.25 });
+      // --- Card: scroll into view ---
+      inView(card, () => {
+        animate(card, { opacity: [0, 1], y: [60, 0], scale: [0.94, 1] }, spring(0.35, 0.9));
+        animate(playBtn, { scale: [0, 1], rotate: [-90, 0] }, { ...spring(0.55, 0.8), delay: 0.25 });
+        animate(bars, { scaleY: [0, 1] }, { duration: 0.45, ease: "easeOut", delay: stagger(0.012, { startDelay: 0.3, from: "center" }) });
+        animate(timeEl, { opacity: [0, 1], x: [16, 0] }, { duration: 0.5, delay: 0.5 });
+        animate(".wish", { opacity: [0, 1], y: [14, 0] }, { duration: 0.6, delay: 0.55 });
+        animate(".sender", { opacity: [0, 1], x: [-24, 0] }, { ...spring(0.4, 0.7), delay: 0.75 });
+        animate("#shareBtn", { scale: [0, 1], y: [10, 0] }, { ...spring(0.6, 0.8), delay: 0.95 });
+        animate(likeBtn, { scale: [0, 1], rotate: [-40, 0] }, { ...spring(0.6, 0.8), delay: 1.05 });
+      }, { amount: 0.25 });
 
-    // --- Footer ---
-    inView("#thanks", ({ target }) => {
-      animate(target,{ opacity: [0, 1], y: [30, 0] }, { duration: 0.7, ease: "easeOut" });
-      animate(".thanks__rule span", { scaleX: [0, 1] }, { duration: 0.6, delay: 0.25, ease: "easeOut" });
-      beat($(".thanks__heart"), 0.6);
-      beat($(".thanks__rule b"), 1);
-    }, { amount: 0.4 });
+      // --- Footer ---
+      inView("#thanks", ({ target }) => {
+        animate(target,{ opacity: [0, 1], y: [30, 0] }, { duration: 0.7, ease: "easeOut" });
+        animate(".thanks__rule span", { scaleX: [0, 1] }, { duration: 0.6, delay: 0.25, ease: "easeOut" });
+        beat($(".thanks__heart"), 0.6);
+        beat($(".thanks__rule b"), 1);
+      }, { amount: 0.4 });
+    };
 
     // --- Gentle parallax on the hero while scrolling ---
     const hero = $("#hero");
@@ -516,6 +521,120 @@
       }).then(() => h.remove());
     }
   }
+
+  // =========================================================
+  // Intro splash
+  // =========================================================
+  const intro = $("#intro");
+  const introOpen = $("#introOpen");
+  const introTitle = $("#introTitle");
+  const introStars = $("#introStars");
+  const introHearts = $("#introHearts");
+  let introClosed = false;
+  let heartTimer = 0;
+
+  if (lenis) lenis.stop();
+
+  // Twinkling stars scattered around the screen
+  const STAR_COLORS = ["#fff", "#fff", "#ffe7a8", "#ffd1dc"];
+  for (let i = 0; i < 34; i++) {
+    const s = document.createElement("span");
+    s.style.left = Math.random() * 100 + "%";
+    s.style.top = Math.random() * 100 + "%";
+    s.style.setProperty("--s", 6 + Math.random() * 16 + "px");
+    s.style.setProperty("--c", STAR_COLORS[i % STAR_COLORS.length]);
+    s.style.setProperty("--d", 1.4 + Math.random() * 2 + "s");
+    s.style.setProperty("--delay", -Math.random() * 3 + "s");
+    introStars.appendChild(s);
+  }
+
+  // A steady stream of hearts floating up
+  const spawnHeart = () => {
+    const h = document.createElement("span");
+    h.textContent = Math.random() > 0.35 ? "♥" : "♡";
+    h.style.left = Math.random() * 100 + "%";
+    h.style.fontSize = 12 + Math.random() * 22 + "px";
+    h.style.setProperty("--x", (Math.random() - 0.5) * 160 + "px");
+    h.style.setProperty("--r", (Math.random() - 0.5) * 90 + "deg");
+    h.style.setProperty("--o", String(0.45 + Math.random() * 0.5));
+    h.style.setProperty("--d", 5 + Math.random() * 4 + "s");
+    h.addEventListener("animationend", () => h.remove());
+    introHearts.appendChild(h);
+  };
+  if (!reduceMotion) {
+    for (let i = 0; i < 6; i++) setTimeout(spawnHeart, i * 250);
+    heartTimer = setInterval(spawnHeart, 420);
+  }
+
+  // Title letters for the staggered entrance
+  const titleChars = [];
+  if (useMotion) {
+    const text = introTitle.textContent;
+    introTitle.textContent = "";
+    for (const ch of text) {
+      const s = document.createElement("span");
+      s.className = "ic";
+      s.textContent = ch;
+      introTitle.appendChild(s);
+      titleChars.push(s);
+    }
+  }
+
+  if (useMotion) {
+    const { animate, stagger } = M;
+    const items = $$("[data-i]", intro);
+    items.forEach((el) => { el.style.opacity = "0"; });
+    titleChars.forEach((c) => { c.style.opacity = "0"; });
+    introTitle.style.opacity = "1";
+
+    const portrait = $(".intro__portrait");
+    animate(portrait, { opacity: [0, 1], scale: [0.2, 1], rotate: [-25, 0] }, { ...spring(0.5, 1.1), delay: 0.2 });
+    setTimeout(() => { if (!introClosed) burst(portrait, 14); }, 650);
+    animate(".intro__date", { opacity: [0, 1], y: [24, 0], scale: [0.6, 1] }, { ...spring(0.55, 0.8), delay: 0.7 });
+    animate(titleChars, { opacity: [0, 1], y: [30, 0], rotate: [-12, 0], filter: ["blur(8px)", "blur(0px)"] },
+      { duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: stagger(0.06, { startDelay: 0.95 }) });
+    animate(".intro__from", { opacity: [0, 1], y: [16, 0] }, { duration: 0.8, delay: 1.9, ease: "easeOut" });
+    animate(introOpen, { opacity: [0, 1], scale: [0.4, 1] }, { ...spring(0.6, 0.8), delay: 2.5 });
+    animate(".intro__open span", { scale: [1, 1.35, 1] }, { duration: 0.9, repeat: Infinity, delay: 3.2 });
+  }
+  setTimeout(() => { if (!introClosed) introOpen.focus({ preventScroll: true }); }, useMotion ? 2600 : 0);
+
+  const finishIntro = () => {
+    clearInterval(heartTimer);
+    intro.hidden = true;
+    intro.remove();
+    document.documentElement.classList.remove("intro-open");
+    if (lenis) lenis.start();
+  };
+
+  const closeIntro = () => {
+    if (introClosed) return;
+    introClosed = true;
+    window.scrollTo(0, 0);
+    if (!useMotion) {
+      finishIntro();
+      playEntrance();
+      return;
+    }
+    const { animate } = M;
+    burst(introOpen, 16);
+    heartRain(24);
+
+    // Shrink the splash into a circle that closes on the button
+    const r = introOpen.getBoundingClientRect();
+    const cx = ((r.left + r.width / 2) / window.innerWidth * 100).toFixed(1);
+    const cy = ((r.top + r.height / 2) / window.innerHeight * 100).toFixed(1);
+    animate($("#introContent"), { scale: [1, 0.9], opacity: [1, 0] }, { duration: 0.5, ease: "easeIn" });
+    animate(150, 0, {
+      duration: 1, delay: 0.15, ease: [0.65, 0, 0.35, 1],
+      onUpdate: (v) => { intro.style.clipPath = `circle(${v}% at ${cx}% ${cy}%)`; },
+    }).then(finishIntro);
+    // Start the page entrance while the circle is closing
+    setTimeout(playEntrance, 450);
+  };
+
+  introOpen.addEventListener("click", closeIntro);
+  intro.addEventListener("keydown", (e) => { if (e.key === "Escape") closeIntro(); });
 
   paint();
 })();
