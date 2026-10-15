@@ -590,12 +590,27 @@
     const portrait = $(".intro__portrait");
     animate(portrait, { opacity: [0, 1], scale: [0.2, 1], rotate: [-25, 0] }, { ...spring(0.5, 1.1), delay: 0.2 });
     setTimeout(() => { if (!introClosed) burst(portrait, 14); }, 650);
-    animate(".intro__date", { opacity: [0, 1], y: [24, 0], scale: [0.6, 1] }, { ...spring(0.55, 0.8), delay: 0.7 });
+    // Doodles around the avatar pop in one by one, then drift gently
+    const ring = $(".intro__deco .deco-ring");
+    ring.setAttribute("pathLength", "1");
+    ring.style.strokeDasharray = "1";
+    ring.style.strokeDashoffset = "1";
+    animate(1, 0, { duration: 1, delay: 0.5, ease: "easeInOut", onUpdate: (v) => { ring.style.strokeDashoffset = String(v); } });
+    const decos = $$(".intro__deco .deco");
+    decos.forEach((d, i) => {
+      d.style.transformBox = "fill-box";
+      d.style.transformOrigin = "center";
+      animate(d, { opacity: [0, 1], scale: [0, 1] }, { ...spring(0.6, 0.7), delay: 0.7 + i * 0.09 });
+      animate(d, { y: [0, i % 2 ? -4 : 4], rotate: [0, i % 2 ? 6 : -6] }, loop(1.6 + (i % 3) * 0.5, { delay: 1.6 + i * 0.1 }));
+    });
+
     animate(titleChars, { opacity: [0, 1], y: [30, 0], rotate: [-12, 0], filter: ["blur(8px)", "blur(0px)"] },
       { duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: stagger(0.06, { startDelay: 0.95 }) });
     animate(".intro__from", { opacity: [0, 1], y: [16, 0] }, { duration: 0.8, delay: 1.9, ease: "easeOut" });
-    animate(introOpen, { opacity: [0, 1], scale: [0.4, 1] }, { ...spring(0.6, 0.8), delay: 2.5 });
-    animate(".intro__open span", { scale: [1, 1.35, 1] }, { duration: 0.9, repeat: Infinity, delay: 3.2 });
+    animate(".intro__cta", { opacity: [0, 1], scale: [0.4, 1] }, { ...spring(0.6, 0.8), delay: 2.5 });
+    animate(".intro__open-heart", { scale: [1, 1.3, 1, 1.15, 1] }, { duration: 1.1, repeat: Infinity, repeatDelay: 0.3, delay: 3.2 });
+    animate(".intro__open-arrow", { x: [0, 4] }, loop(0.6, { delay: 3.2 }));
+    animate(".intro__burst", { opacity: [1, 0.35], scale: [1, 0.85] }, loop(0.8, { delay: 3 }));
   }
   setTimeout(() => { if (!introClosed) introOpen.focus({ preventScroll: true }); }, useMotion ? 2600 : 0);
 
