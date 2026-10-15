@@ -460,13 +460,31 @@ html.intro-open body { overflow: hidden; }
   overflow: visible;
   pointer-events: none;
 }
-.intro__deco .deco-ring { fill: none; stroke: #f2a2b5; stroke-width: 1.6; }
-.intro__deco .fill { fill: var(--rose); }
-.intro__deco .fill.soft { fill: #f39ab0; }
-.intro__deco .line { fill: none; stroke: var(--rose); stroke-width: 2; }
-.intro__deco .gold { fill: #f5c45e; }
-.intro__deco .stroke { fill: none; stroke: var(--rose); stroke-width: 2.2; stroke-linecap: round; }
-.intro__deco .dashed { stroke-width: 1.6; stroke-dasharray: 4 5; opacity: .8; }
+.intro__deco .deco-ring { fill: none; stroke: #f088a3; stroke-width: 2.6; }
+.intro__deco .outlined { stroke: #fff; stroke-width: 2.2; paint-order: stroke; }
+.intro__deco .soft { fill: #f6a8bb; }
+.intro__deco .gold { fill: #f4c55f; }
+.intro__deco .stroke { fill: none; stroke: #ee6f8e; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.intro__deco .drops { stroke-width: 3.4; }
+.intro__deco .doodle { stroke-width: 2.8; }
+.intro__deco .dashed { stroke-width: 1.8; stroke-dasharray: 5 5; }
+
+/* Brush underline under the title and heart divider under the subtitle */
+.intro__swoosh {
+  display: block;
+  width: min(58%, 230px);
+  margin: 2px auto 0;
+  overflow: visible;
+}
+.intro__swoosh path { fill: none; stroke: #ec6688; stroke-width: 4; stroke-linecap: round; }
+.intro__divider {
+  display: block;
+  width: min(62%, 250px);
+  margin: 4px auto 0;
+  overflow: visible;
+}
+.intro__divider .line { fill: none; stroke: #ec6f8e; stroke-width: 1.8; stroke-linecap: round; }
+.intro__divider use { fill: var(--rose); }
 
 /* Title with a light sweep running across the letters */
 .intro__title {
@@ -518,9 +536,12 @@ html.intro-open body { overflow: hidden; }
   align-items: center;
   gap: 10px;
   padding: 13px 26px 13px 22px;
-  border: 3px solid #fff4f6;
+  border: 2px solid rgba(255, 255, 255, .85);
   border-radius: 999px;
-  background: linear-gradient(180deg, #f9879f 0%, #ee6385 48%, #db4670 100%);
+  /* Soft top gloss blended into the base gradient (no separate edges) */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .32) 0%, rgba(255, 255, 255, .1) 45%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, #f7829b 0%, #ec5f82 55%, #d9446d 100%);
   color: #fff;
   font-family: var(--f-body);
   font-weight: 700;
@@ -528,23 +549,13 @@ html.intro-open body { overflow: hidden; }
   letter-spacing: .02em;
   text-shadow: 0 1px 1px rgba(150, 30, 70, .35);
   cursor: pointer;
+  white-space: nowrap;
   overflow: hidden;
   box-shadow:
-    0 0 0 4px rgba(232, 88, 122, .22),
-    inset 0 2px 1px rgba(255, 255, 255, .55),
-    inset 0 -4px 8px rgba(150, 25, 70, .28),
-    0 12px 26px rgba(217, 68, 106, .42);
+    inset 0 1px 0 rgba(255, 255, 255, .45),
+    inset 0 -3px 6px rgba(150, 25, 70, .22),
+    0 10px 24px rgba(217, 68, 106, .38);
   animation: pulse 1.8s ease-out infinite;
-}
-/* Glass highlight on the top half */
-.intro__open::before {
-  content: "";
-  position: absolute;
-  left: 10px; right: 10px; top: 3px;
-  height: 46%;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .6), rgba(255, 255, 255, .08));
-  pointer-events: none;
 }
 /* Shine sweeping across */
 .intro__open::after {
@@ -588,8 +599,8 @@ html.intro-open body { overflow: hidden; }
   60%, 100% { background-position: 0 0; }
 }
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 4px rgba(232, 88, 122, .22), inset 0 2px 1px rgba(255, 255, 255, .55), inset 0 -4px 8px rgba(150, 25, 70, .28), 0 12px 26px rgba(217, 68, 106, .42), 0 0 0 4px rgba(232, 88, 122, .4); }
-  100% { box-shadow: 0 0 0 4px rgba(232, 88, 122, .22), inset 0 2px 1px rgba(255, 255, 255, .55), inset 0 -4px 8px rgba(150, 25, 70, .28), 0 12px 26px rgba(217, 68, 106, .42), 0 0 0 24px rgba(232, 88, 122, 0); }
+  0% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -3px 6px rgba(150, 25, 70, .22), 0 10px 24px rgba(217, 68, 106, .38), 0 0 0 0 rgba(232, 88, 122, .45); }
+  100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -3px 6px rgba(150, 25, 70, .22), 0 10px 24px rgba(217, 68, 106, .38), 0 0 0 20px rgba(232, 88, 122, 0); }
 }
 
 .anim .intro [data-i],

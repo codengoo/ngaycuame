@@ -607,12 +607,25 @@
     animate(titleChars, { opacity: [0, 1], y: [30, 0], rotate: [-12, 0], filter: ["blur(8px)", "blur(0px)"] },
       { duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: stagger(0.06, { startDelay: 0.95 }) });
     animate(".intro__from", { opacity: [0, 1], y: [16, 0] }, { duration: 0.8, delay: 1.9, ease: "easeOut" });
+
+    // Brush underline + heart divider are drawn in like pen strokes
+    const drawIn = (path, delay) => {
+      path.style.strokeDasharray = "1";
+      path.style.strokeDashoffset = "1";
+      animate(1, 0, { duration: 0.6, delay, ease: "easeOut", onUpdate: (v) => { path.style.strokeDashoffset = String(v); } });
+    };
+    animate(".intro__swoosh, .intro__divider", { opacity: [0, 1] }, { duration: 0.01, delay: 1.6 });
+    drawIn($(".intro__swoosh path"), 1.6);
+    $$(".intro__divider .line").forEach((p) => drawIn(p, 2.1));
+    const divHeart = $(".intro__divider use");
+    divHeart.style.transformBox = "fill-box";
+    divHeart.style.transformOrigin = "center";
+    animate(divHeart, { scale: [0, 1.4, 1] }, { duration: 0.5, delay: 2.4 });
     animate(".intro__cta", { opacity: [0, 1], scale: [0.4, 1] }, { ...spring(0.6, 0.8), delay: 2.5 });
     animate(".intro__open-heart", { scale: [1, 1.3, 1, 1.15, 1] }, { duration: 1.1, repeat: Infinity, repeatDelay: 0.3, delay: 3.2 });
     animate(".intro__open-arrow", { x: [0, 4] }, loop(0.6, { delay: 3.2 }));
     animate(".intro__burst", { opacity: [1, 0.35], scale: [1, 0.85] }, loop(0.8, { delay: 3 }));
   }
-  setTimeout(() => { if (!introClosed) introOpen.focus({ preventScroll: true }); }, useMotion ? 2600 : 0);
 
   const finishIntro = () => {
     clearInterval(heartTimer);
@@ -649,7 +662,7 @@
   };
 
   introOpen.addEventListener("click", closeIntro);
-  intro.addEventListener("keydown", (e) => { if (e.key === "Escape") closeIntro(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeIntro(); });
 
   paint();
 })();

@@ -84,35 +84,52 @@
     <div class="intro__content" id="introContent">
       <div class="intro__portrait" data-i>
         <img src="images/be-gai.webp" width="760" height="624" alt="">
-        <!-- Doodles around the avatar (portrait circle = 50..250 in this box) -->
+        <!-- Doodles around the avatar, placed from the reference artwork.
+             Box: avatar image circle = centre 150,150 r100; pink ring r109. -->
         <svg class="intro__deco" viewBox="0 0 300 300" aria-hidden="true">
           <defs>
-            <symbol id="hh" viewBox="0 0 24 22"><path d="M12 20.5S3 14.9 3 8.6A4.6 4.6 0 0 1 12 6.4a4.6 4.6 0 0 1 9 2.2c0 6.3-9 11.9-9 11.9z"/></symbol>
-            <symbol id="star" viewBox="0 0 20 20"><path d="M10 0l2.2 7.8L20 10l-7.8 2.2L10 20l-2.2-7.8L0 10l7.8-2.2z"/></symbol>
+            <!-- Classic rounded heart with a pointed tip -->
+            <symbol id="hh" viewBox="0 0 24 22"><path d="M12 21.6C5.6 17 1.5 13.1 1.5 8c0-3.6 2.7-6.2 5.9-6.2 2 0 3.6 1 4.6 2.6 1-1.6 2.6-2.6 4.6-2.6 3.2 0 5.9 2.6 5.9 6.2 0 5.1-4.1 9-10.5 13.6z"/></symbol>
+            <!-- Puffy heart: gradient body + soft highlight on the left lobe -->
+            <linearGradient id="hg" x1="0" y1="0" x2="0.3" y2="1">
+              <stop offset="0" stop-color="#f991aa"/>
+              <stop offset="1" stop-color="#e5557a"/>
+            </linearGradient>
+            <symbol id="hp" viewBox="0 0 24 22">
+              <path fill="url(#hg)" d="M12 21.6C5.6 17 1.5 13.1 1.5 8c0-3.6 2.7-6.2 5.9-6.2 2 0 3.6 1 4.6 2.6 1-1.6 2.6-2.6 4.6-2.6 3.2 0 5.9 2.6 5.9 6.2 0 5.1-4.1 9-10.5 13.6z"/>
+              <ellipse cx="6.6" cy="6.4" rx="2.4" ry="1.4" fill="#fff" opacity=".55" transform="rotate(-35 6.6 6.4)"/>
+            </symbol>
+            <symbol id="star" viewBox="0 0 20 20"><path d="M10 0c.9 5.4 4.6 9.1 10 10-5.4.9-9.1 4.6-10 10-.9-5.4-4.6-9.1-10-10 5.4-.9 9.1-4.6 10-10z"/></symbol>
           </defs>
-          <circle class="deco-ring" cx="150" cy="150" r="113"/>
-          <g class="deco"><use href="#hh" x="139" y="26" width="22" height="20" class="fill"/></g>
-          <g class="deco"><use href="#hh" x="14" y="92" width="26" height="24" class="line" transform="rotate(-16 27 104)"/></g>
-          <g class="deco"><use href="#hh" x="30" y="200" width="16" height="15" class="fill soft"/></g>
-          <g class="deco"><use href="#hh" x="14" y="168" width="10" height="9" class="fill soft"/></g>
+
+          <circle class="deco-ring" cx="150" cy="150" r="109"/>
+
+          <!-- heart sitting on the ring, white outline -->
+          <g class="deco"><use href="#hp" x="149" y="34" width="23" height="21" class="outlined"/></g>
+          <!-- top-left: soft small heart + gold sparkle -->
+          <g class="deco"><use href="#hh" x="14.8" y="92.9" width="15" height="13.8" class="soft" transform="rotate(-15 22.3 99.8)"/></g>
+          <g class="deco"><use href="#star" x="38.9" y="67.4" width="12" height="12" class="gold"/></g>
+          <!-- left: big puffy heart + little heart swoosh below -->
+          <g class="deco"><use href="#hp" x="5.4" y="160.6" width="28" height="25.7" transform="rotate(-18 19.4 173.4)"/></g>
+          <g class="deco"><path class="stroke" d="M29 205c3.5 1 7 4.5 8.6 9.6 2.2-3.9 6.2-6.4 11.2-6.8"/></g>
+          <!-- right: big puffy heart + falling drops -->
+          <g class="deco"><use href="#hp" x="266" y="131.7" width="26" height="23.8" transform="rotate(16 279 143.6)"/></g>
+          <g class="deco"><path class="stroke drops" d="M280.5 165.5l-4 7M273 179.5l-5 6.5M265.5 192l-4.5 5"/></g>
+          <!-- top-right: hand-drawn heart with little rays -->
           <g class="deco">
-            <use href="#hh" x="256" y="116" width="30" height="27" class="fill" transform="rotate(14 271 130)"/>
-            <path class="stroke" d="M262 158l-5 10M272 160l-2 9M281 154l2 8"/>
+            <path class="stroke doodle" d="M266.5 43c-8.6-6.6-13.6-13.8-10.6-19.6 2.6-5 8.8-4.6 10.9 1.2 2.4-5.8 8.9-6.3 11.2-1.1 2.8 6.4-3 13.6-12.5 20.4-.9.6-1.8 1.4-2.4 2.3"/>
+            <path class="stroke" d="M247 34h-6M251 18l-4.5-4.5M267 11V4M283 18l4.5-4.5M287 34h6"/>
           </g>
+          <!-- bottom-right: dashed trail that loops into a heart -->
           <g class="deco">
-            <use href="#hh" x="240" y="30" width="26" height="24" class="line"/>
-            <path class="stroke" d="M253 22v-9M241 26l-6-6M265 26l6-6M235 38h-8M271 38h8"/>
-          </g>
-          <g class="deco"><use href="#star" x="52" y="38" width="16" height="16" class="gold"/></g>
-          <g class="deco"><use href="#star" x="262" y="214" width="10" height="10" class="gold"/></g>
-          <g class="deco">
-            <path class="stroke dashed" d="M196 286c30 4 58-6 66-26 6-15-8-24-17-14-8 9 4 22 20 18 14-4 22-16 24-28"/>
-            <use href="#hh" x="281" y="224" width="16" height="15" class="line"/>
+            <path class="stroke dashed" d="M250 239c12 5 27 4 38-3.4-8.8-6.2-10.4-17.8-3.3-19.4 4-.9 6.2 2.6 6.3 5.6 1.4-3.2 4.9-5.6 8.2-3.7 5.4 3.1 1 13.5-11.2 17.5 15 2.6 40-1.4 68-9"/>
           </g>
         </svg>
       </div>
       <h2 class="intro__title" id="introTitle">Một lời chúc nhỏ</h2>
+      <svg class="intro__swoosh" viewBox="0 0 200 14" aria-hidden="true" data-i><path pathLength="1" d="M5 10.5C52 4.5 128 2.5 195 5.5"/></svg>
       <p class="intro__from" data-i>của bé <span class="intro__nick">Tấn Phát</span> gửi mẹ yêu</p>
+      <svg class="intro__divider" viewBox="0 0 200 18" aria-hidden="true" data-i><path class="line" pathLength="1" d="M8 10c26-2 52-2 80-.5"/><path class="line" pathLength="1" d="M192 10c-26-2-52-2-80-.5"/><use href="#hh" x="93" y="3.5" width="14" height="13"/></svg>
       <span class="intro__cta" data-i>
         <svg class="intro__burst" viewBox="0 0 40 40" aria-hidden="true"><path d="M30 14l-8-8M28 20H15M30 26l-8 8"/></svg>
         <button class="intro__open" id="introOpen" type="button">
