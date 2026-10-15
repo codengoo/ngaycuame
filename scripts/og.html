@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- Build helper page (not deployed): renders the 1200×630 share preview and
+     resizes avatars. Driven by scripts/build.mjs through headless Chrome. -->
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body {
+    width: 1200px; height: 630px; overflow: hidden; position: relative;
+    display: grid; place-items: center;
+    background: radial-gradient(circle at 50% 48%, #fffaf6 0%, #fde6ea 40%, #f6c3d0 100%);
+  }
+  .rays {
+    position: absolute; left: 50%; top: 48%; width: 2200px; height: 2200px; translate: -50% -50%;
+    background: repeating-conic-gradient(from 4deg, rgba(255,255,255,.55) 0deg 6deg, transparent 6deg 18deg);
+    -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 45%);
+    opacity: .75;
+  }
+  .p {
+    position: relative; width: 440px; height: 440px; border-radius: 50%; border: 10px solid #fff;
+    background: radial-gradient(circle at 50% 40%, #fff 0%, #fde9e2 70%);
+    box-shadow: 0 0 0 18px rgba(255,255,255,.45), 0 30px 80px rgba(232,88,122,.4);
+  }
+  .p img {
+    position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%;
+    object-fit: cover; object-position: 50% 30%;
+  }
+  .ring { position: absolute; inset: -40px; border-radius: 50%; border: 4px dashed rgba(232,88,122,.45); }
+  .ring::before, .ring::after {
+    content: "♥"; position: absolute; left: 50%; translate: -50% 0; color: #e8587a; font-size: 40px; line-height: 1;
+  }
+  .ring::before { top: -22px; }
+  .ring::after { bottom: -22px; }
+  .s {
+    position: absolute; background: #fff;
+    clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+    filter: drop-shadow(0 0 8px #fff);
+  }
+  .h { position: absolute; color: #e8587a; line-height: 1; }
+</style>
+</head>
+<body>
+  <div class="rays"></div>
+  <div class="p"><span class="ring"></span><img id="avatar" alt=""></div>
+  <i class="s" style="left:180px;top:90px;width:34px;height:34px"></i>
+  <i class="s" style="left:950px;top:70px;width:26px;height:26px;background:#ffe7a8"></i>
+  <i class="s" style="left:1010px;top:470px;width:40px;height:40px"></i>
+  <i class="s" style="left:130px;top:450px;width:24px;height:24px;background:#ffd1dc"></i>
+  <i class="s" style="left:300px;top:300px;width:18px;height:18px"></i>
+  <i class="s" style="left:880px;top:280px;width:20px;height:20px;background:#ffe7a8"></i>
+  <span class="h" style="left:230px;top:180px;font-size:52px;rotate:-14deg">♥</span>
+  <span class="h" style="left:920px;top:150px;font-size:38px;rotate:12deg;opacity:.8">♥</span>
+  <span class="h" style="left:860px;top:500px;font-size:30px;opacity:.7">♡</span>
+  <span class="h" style="left:310px;top:500px;font-size:34px;opacity:.75;rotate:10deg">♥</span>
+  <span class="h" style="left:1080px;top:300px;font-size:24px;opacity:.6">♥</span>
+  <span class="h" style="left:90px;top:300px;font-size:28px;opacity:.6">♡</span>
+
+<script>
+  const load = async (src) => {
+    const im = new Image();
+    im.src = src;
+    await im.decode();
+    return im;
+  };
+
+  // Resize the avatar to WebP (max 760px wide) and report whether it has
+  // transparency (cut-out illustration) or is a regular photo.
+  window.processAvatar = async (src) => {
+    const im = await load(src);
+    const scale = Math.min(1, 760 / im.naturalWidth);
+    const w = Math.round(im.naturalWidth * scale);
+    const h = Math.round(im.naturalHeight * scale);
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const g = c.getContext("2d");
+    g.drawImage(im, 0, 0, w, h);
+    const data = g.getImageData(0, 0, w, h).data;
+    let transparent = 0;
+    for (let i = 3; i < data.length; i += 4) if (data[i] < 200) transparent++;
+    const hasAlpha = transparent / (w * h) > 0.02;
+    return { dataUrl: c.toDataURL("image/webp", 0.86), width: w, height: h, hasAlpha };
+  };
+
+  window.renderPreview = async (src, focus) => {
+    const img = document.getElementById("avatar");
+    img.style.objectPosition = focus || "50% 30%";
+    img.src = src;
+    await img.decode();
+    await document.fonts.ready;
+    return true;
+  };
+</script>
+</body>
+</html>

@@ -110,6 +110,22 @@ body {
   -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent 100%);
           mask-image: linear-gradient(to bottom, #000 82%, transparent 100%);
 }
+
+/* Photo avatars (no transparency) sit in a round white frame instead of
+   floating like the cut-out illustration */
+.kid-photo { --avatar-size: cover; --avatar-pos: var(--focus, 50% 30%); }
+.kid-photo .hero__girl {
+  width: 64%;
+  aspect-ratio: 1;
+  margin: 8px auto 0;
+  object-fit: cover;
+  object-position: var(--focus, 50% 30%);
+  border-radius: 50%;
+  border: 6px solid #fff;
+  box-shadow: 0 0 0 8px rgba(255, 255, 255, .45), 0 18px 40px rgba(232, 88, 122, .3);
+  -webkit-mask-image: none;
+          mask-image: none;
+}
 .hero__note {
   position: absolute;
   right: -4px;
@@ -305,7 +321,8 @@ body {
   border-radius: 50%;
   border: 3px solid #fff;
   box-shadow: 0 3px 10px rgba(201, 120, 135, .25);
-  background: #fde9e2 url("images/be-gai.webp") 50% 26% / 240% auto no-repeat;
+  /* Per-kid avatar (set on <body> by the build); illustrations zoom on the face, photos use cover */
+  background: #fde9e2 var(--avatar) var(--avatar-pos, 50% 26%) / var(--avatar-size, 240% auto) no-repeat;
 }
 .sender__name { font-family: var(--f-body); font-weight: 600; font-size: .98rem; color: var(--ink-soft); }
 .sender__nick {
@@ -458,7 +475,7 @@ html.intro-open body { overflow: hidden; }
   width: 100%; height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  object-position: 50% 30%;
+  object-position: var(--focus, 50% 30%);
 }
 /* Doodles around the avatar: the SVG box is 1.5× the portrait */
 .intro__deco {

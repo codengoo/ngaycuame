@@ -28,9 +28,6 @@
   // Each bar is the RMS loudness of an equal time slice, so bar i covers
   // [i/N, (i+1)/N] of the track and lines up with the playback timeline.
   const BAR_COUNT = 64;
-  // Precomputed from audio/loi-chuc.m4a; used when the file can't be decoded
-  // in the browser (e.g. opening index.html straight from disk blocks fetch).
-  const FALLBACK_PEAKS = [0.245,0.35,0.544,0.551,0.501,0.349,0.305,0.259,0.122,0.048,0.153,0.087,0.096,0.33,0.182,0.217,0.214,0.222,0.221,0.329,0.297,0.333,0.285,0.198,0.036,0.011,0.038,0.508,0.164,0.254,0.402,1,0.32,0.01,0.008,0.002,0.002,0.002,0.002,0.002,0.002,0.003,0.023,0.814,0.437,0.504,0.317,0.178,0.21,0.242,0.189,0.23,0.167,0.276,0.211,0.013,0.003,0.002,0.002,0.002,0.002,0.002,0.002,0.002];
 
   const baseLayer = document.createElement("div");
   const fillLayer = document.createElement("div");
@@ -71,7 +68,8 @@
     const i = Math.min(Math.floor(x), voiced.length - 1);
     return Math.min(1, (voicedCum[i] + voiced[i] * (x - i)) / voicedTotal);
   };
-  drawPeaks(FALLBACK_PEAKS);
+  // Flat placeholder until the kid's own recording has been decoded below
+  drawPeaks(new Array(BAR_COUNT).fill(0.3));
 
   const computePeaks = (buf, n) => {
     const ch = buf.getChannelData(0);
