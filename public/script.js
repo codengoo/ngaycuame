@@ -621,10 +621,9 @@
     divHeart.style.transformBox = "fill-box";
     divHeart.style.transformOrigin = "center";
     animate(divHeart, { scale: [0, 1.4, 1] }, { duration: 0.5, delay: 2.4 });
-    animate(".intro__cta", { opacity: [0, 1], scale: [0.4, 1] }, { ...spring(0.6, 0.8), delay: 2.5 });
-    animate(".intro__open-heart", { scale: [1, 1.3, 1, 1.15, 1] }, { duration: 1.1, repeat: Infinity, repeatDelay: 0.3, delay: 3.2 });
-    animate(".intro__open-arrow", { x: [0, 4] }, loop(0.6, { delay: 3.2 }));
-    animate(".intro__burst", { opacity: [1, 0.35], scale: [1, 0.85] }, loop(0.8, { delay: 3 }));
+    animate(introOpen, { opacity: [0, 1], scale: [0.4, 1], y: [20, 0] }, { ...spring(0.6, 0.8), delay: 2.5 });
+    // Gentle "breathing" so the button invites a tap
+    animate(".intro__open img", { scale: [1, 1.05], rotate: [0, -1.2] }, loop(0.9, { delay: 3.2 }));
   }
 
   const finishIntro = () => {
