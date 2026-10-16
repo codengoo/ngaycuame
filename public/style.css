@@ -268,6 +268,22 @@ body {
   cursor: pointer;
   outline-offset: 4px;
   touch-action: none;
+  overflow: hidden;
+}
+/* Strip of bars: as wide as the player, or wider for long recordings
+   (script.js then slides it to follow the playhead) */
+.wave__strip {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 100%;
+  will-change: transform;
+}
+/* Fade the edge(s) where more of the strip is hidden */
+.wave.has-before { -webkit-mask-image: linear-gradient(to right, transparent, #000 18px); mask-image: linear-gradient(to right, transparent, #000 18px); }
+.wave.has-after { -webkit-mask-image: linear-gradient(to left, transparent, #000 18px); mask-image: linear-gradient(to left, transparent, #000 18px); }
+.wave.has-before.has-after {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+          mask-image: linear-gradient(to right, transparent, #000 18px, #000 calc(100% - 18px), transparent);
 }
 .wave__layer {
   position: absolute;

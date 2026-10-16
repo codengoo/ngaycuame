@@ -27,20 +27,53 @@
   // ----- Waveform from the real audio -----
   // Each bar is the RMS loudness of an equal time slice, so bar i covers
   // [i/N, (i+1)/N] of the track and lines up with the playback timeline.
-  const BAR_COUNT = 64;
+  // Bars keep a minimum pitch; when a long recording doesn't fit, the strip
+  // is wider than the player and slides along to keep the playhead in view.
+  const BAR_COUNT = 64; // placeholder until the recording is decoded
+  const BARS_PER_SECOND = 6;
+  const MIN_PITCH = 4; // px per bar, gap included
 
+  const strip = document.createElement("div");
   const baseLayer = document.createElement("div");
   const fillLayer = document.createElement("div");
+  strip.className = "wave__strip";
   baseLayer.className = "wave__layer wave__base";
   fillLayer.className = "wave__layer wave__fill";
-  wave.append(baseLayer, fillLayer);
+  strip.append(baseLayer, fillLayer);
+  wave.append(strip);
 
   const bars = [];
   const fillBars = [];
-  for (let i = 0; i < BAR_COUNT; i++) {
-    bars.push(baseLayer.appendChild(document.createElement("i")));
-    fillBars.push(fillLayer.appendChild(document.createElement("i")));
-  }
+  const setBarCount = (n) => {
+    if (bars.length === n) return;
+    baseLayer.textContent = fillLayer.textContent = "";
+    bars.length = fillBars.length = 0;
+    for (let i = 0; i < n; i++) {
+      bars.push(baseLayer.appendChild(document.createElement("i")));
+      fillBars.push(fillLayer.appendChild(document.createElement("i")));
+    }
+    layoutStrip();
+  };
+
+  let stripW = 0;
+  let viewW = 0;
+  let stripX = 0;
+  let dragging = false;
+  const layoutStrip = () => {
+    viewW = wave.clientWidth;
+    stripW = Math.max(viewW, bars.length * MIN_PITCH);
+    strip.style.width = stripW + "px";
+    wave.classList.toggle("is-scrolling", stripW > viewW);
+  };
+  // Slide the strip so the playhead sits mid-view (clamped at both ends)
+  const followPlayhead = (p) => {
+    if (wave.clientWidth !== viewW) layoutStrip(); // e.g. first shown after the intro
+    if (!dragging) stripX = Math.min(Math.max(p * stripW - viewW / 2, 0), stripW - viewW);
+    strip.style.transform = `translateX(${-stripX}px)`;
+    wave.classList.toggle("has-before", stripX > 1);
+    wave.classList.toggle("has-after", stripX < stripW - viewW - 1);
+  };
+  window.addEventListener("resize", layoutStrip);
 
   // Voice timeline: which slices actually contain speech. The lyric reveal
   // only advances through voiced slices, so it pauses on silences/commas.
@@ -50,6 +83,7 @@
   let voicedTotal = 1;
 
   const drawPeaks = (peaks) => {
+    setBarCount(peaks.length);
     peaks.forEach((v, i) => {
       // Gentle curve so quiet speech is still visible; silence stays a small dot
       const h = v < 0.02 ? 0 : 12 + 88 * Math.pow(v, 0.75);
@@ -88,7 +122,7 @@
   fetch(audio.currentSrc || audio.src)
     .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject()))
     .then((data) => new OfflineAudioContext(1, 1, 44100).decodeAudioData(data))
-    .then((buf) => drawPeaks(computePeaks(buf, BAR_COUNT)))
+    .then((buf) => drawPeaks(computePeaks(buf, Math.max(BAR_COUNT, Math.round(buf.duration * BARS_PER_SECOND)))))
     .catch(() => {});
 
   // Split text into word spans so they can be staggered in. Heart icons count
@@ -355,6 +389,7 @@
   const paint = () => {
     const p = audio.duration ? audio.currentTime / audio.duration : 0;
     fillLayer.style.setProperty("--p", (p * 100).toFixed(3) + "%");
+    followPlayhead(p);
     // Before the first play (and after it ends) the wish stays fully readable
     const started = !audio.paused || audio.currentTime > 0;
     wish.classList.toggle("is-revealing", started);
@@ -417,20 +452,30 @@
   });
 
   // Seek by clicking / dragging on the waveform
+  // The point under the finger is on the (possibly slid) strip; the strip
+  // holds still while dragging and re-centres on release.
   const seekTo = (clientX) => {
     if (!audio.duration) return;
     const r = wave.getBoundingClientRect();
-    const p = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+    const p = Math.min(1, Math.max(0, (clientX - r.left + stripX) / stripW));
     audio.currentTime = p * audio.duration;
     paint();
   };
   wave.addEventListener("pointerdown", (e) => {
+    dragging = true;
     seekTo(e.clientX);
     wave.setPointerCapture(e.pointerId);
   });
   wave.addEventListener("pointermove", (e) => {
     if (wave.hasPointerCapture(e.pointerId)) seekTo(e.clientX);
   });
+  const endDrag = () => {
+    if (!dragging) return;
+    dragging = false;
+    paint();
+  };
+  wave.addEventListener("pointerup", endDrag);
+  wave.addEventListener("pointercancel", endDrag);
   wave.addEventListener("keydown", (e) => {
     if (!audio.duration) return;
     if (e.key === "ArrowRight") audio.currentTime = Math.min(audio.duration, audio.currentTime + 3);

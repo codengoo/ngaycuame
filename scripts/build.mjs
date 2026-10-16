@@ -9,7 +9,7 @@
 //
 // Output (all under public/, served as static assets):
 //   public/<slug>/index.html, avatar.webp, og.jpg, audio.<ext>
-//   public/index.html         = the default kid from site.json
+//   public/index.html, og.jpg = list of all kids (template/home.html)
 //   public/sitemap.xml, public/robots.txt
 //
 // Needs a local Chrome/Edge (set CHROME_PATH if it isn't found).
@@ -29,6 +29,7 @@ const MANIFEST = join(ROOT, "scripts", ".generated.json");
 const site = JSON.parse(readFileSync(join(ROOT, "site.json"), "utf8"));
 const baseUrl = site.baseUrl.replace(/\/+$/, "");
 const template = readFileSync(join(ROOT, "template", "index.html"), "utf8");
+const homeTemplate = readFileSync(join(ROOT, "template", "home.html"), "utf8");
 // Shared CSS/JS get a content hash in their URL so browsers pick up new versions right away
 const assetVersion = (file) => createHash("sha1").update(readFileSync(join(ROOT, "public", file))).digest("hex").slice(0, 8);
 const CSS_V = assetVersion("style.css");
@@ -105,8 +106,6 @@ for (const kid of kids) {
   if (kid.transcript && !kid.timing) console.warn(`⚠ kids/${kid.slug}/: lời chúc khác nhiều so với ghi âm – chữ sẽ chạy theo sóng âm`);
 }
 
-const defaultKid = kids.find((k) => k.slug === site.defaultKid) || kids[0];
-
 // ---------- Remove pages of kids that were deleted ----------
 const previous = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, "utf8")) : [];
 for (const slug of previous) {
@@ -117,6 +116,7 @@ for (const slug of previous) {
 }
 
 // ---------- Images (avatar WebP + share preview) via headless Chrome ----------
+let homeOgHash;
 await withChrome(async (page) => {
   await page.viewport(1200, 630);
   await page.goto(pathToFileURL(join(ROOT, "scripts", "og.html")).href);
@@ -135,15 +135,32 @@ await withChrome(async (page) => {
     writeFileSync(join(out, "og.jpg"), og);
     kid.ogHash = hash(og);
   }
+
+  // Share preview of the home page, from the shared illustration
+  await page.eval(`renderPreview(${JSON.stringify(pathToFileURL(DEFAULT_AVATAR).href)}, "50% 30%")`);
+  const og = await page.screenshotJpeg(90);
+  writeFileSync(join(PUBLIC, "og.jpg"), og);
+  homeOgHash = hash(og);
 });
 
 // ---------- Pages ----------
+const ROBOTS = site.indexable === false ? "noindex, nofollow" : "index, follow, max-image-preview:large";
+// "</" is escaped so text can never close the <script> tag
+const jsonLdBlock = (data) => JSON.stringify(data, null, 2).replace(/<\//g, "<\\/").replace(/^/gm, "  ");
+const fill = (tpl, values) => tpl.replace(/\{\{([A-Z_]+)\}\}/g, (m, key) => {
+  if (!(key in values)) fail(`Template có ô {{${key}}} chưa được điền`);
+  return values[key];
+});
+const wishLines = (kid) => kid.wish.trim().split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+const audioUrlOf = (kid) => `/${kid.slug}/audio${extname(kid.audio).toLowerCase()}?v=${kid.audioHash}`;
+const avatarUrlOf = (kid) => `/${kid.slug}/avatar.webp?v=${kid.avatarHash}`;
+
 const render = (kid, pageUrl) => {
-  const lines = kid.wish.trim().split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const lines = wishLines(kid);
   const oneLine = lines.join(" ");
   const audioExt = extname(kid.audio).toLowerCase();
-  const audioUrl = `/${kid.slug}/audio${audioExt}?v=${kid.audioHash}`;
-  const avatarUrl = `/${kid.slug}/avatar.webp?v=${kid.avatarHash}`;
+  const audioUrl = audioUrlOf(kid);
+  const avatarUrl = avatarUrlOf(kid);
   const ogUrl = `${baseUrl}/${kid.slug}/og.jpg?v=${kid.ogHash}`;
 
   const jsonLd = {
@@ -182,14 +199,46 @@ const render = (kid, pageUrl) => {
     CSS_V,
     JS_V,
     BODY_CLASS: kid.isPhoto ? "kid-photo" : "kid-illustration",
-    ROBOTS: site.indexable === false ? "noindex, nofollow" : "index, follow, max-image-preview:large",
-    // "</" is escaped so a wish can never close the <script> tag
-    JSON_LD: JSON.stringify(jsonLd, null, 2).replace(/<\//g, "<\\/").replace(/^/gm, "  "),
+    ROBOTS,
+    JSON_LD: jsonLdBlock(jsonLd),
   };
+  return fill(template, values);
+};
 
-  return template.replace(/\{\{([A-Z_]+)\}\}/g, (m, key) => {
-    if (!(key in values)) fail(`Template có ô {{${key}}} chưa được điền`);
-    return values[key];
+// Home page: a card per kid, sorted by name
+const renderHome = () => {
+  const sorted = [...kids].sort((a, b) => a.name.localeCompare(b.name, "vi"));
+  const cards = sorted.map((kid) => `      <li class="kid">
+        <span class="kid__avatar"><img src="${esc(avatarUrlOf(kid))}" width="64" height="64" alt="" loading="lazy" style="--focus: ${esc(kid.avatarFocus || "50% 25%")}"></span>
+        <div class="kid__body">
+          <h2 class="kid__name"><a href="/${kid.slug}/">${esc(kid.name)}</a></h2>
+          <p class="kid__wish">“${esc(wishLines(kid).join(" "))}”</p>
+        </div>
+        <button class="kid__play" type="button" data-src="${esc(audioUrlOf(kid))}" data-name="${esc(kid.name)}" aria-pressed="false" aria-label="Nghe lời chúc của bé ${esc(kid.name)}">
+          <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+          <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.4"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.4"/></svg>
+        </button>
+      </li>`).join("\n");
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Lời chúc nhỏ gửi mẹ",
+    description: `${kids.length} lời chúc 20/10 các con ghi âm gửi mẹ.`,
+    inLanguage: "vi",
+    url: `${baseUrl}/`,
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: sorted.map((kid, i) => ({ "@type": "ListItem", position: i + 1, name: kid.name, url: `${baseUrl}/${kid.slug}/` })),
+    },
+  };
+  return fill(homeTemplate, {
+    COUNT: String(kids.length),
+    CARDS: cards,
+    PAGE_URL: esc(`${baseUrl}/`),
+    OG_IMAGE_URL: esc(`${baseUrl}/og.jpg?v=${homeOgHash}`),
+    ROBOTS,
+    CSS_V,
+    JSON_LD: jsonLdBlock(jsonLd),
   });
 };
 
@@ -205,8 +254,7 @@ for (const kid of kids) {
   writeFileSync(join(out, "index.html"), render(kid, `${baseUrl}/${kid.slug}/`));
 }
 
-// The site root shows the default kid; its canonical URL is that kid's page
-writeFileSync(join(PUBLIC, "index.html"), render(defaultKid, `${baseUrl}/${defaultKid.slug}/`));
+writeFileSync(join(PUBLIC, "index.html"), renderHome());
 
 // ---------- Sitemap / robots ----------
 const today = new Date().toISOString().slice(0, 10);
@@ -214,7 +262,8 @@ if (site.indexable === false) {
   rmSync(join(PUBLIC, "sitemap.xml"), { force: true });
   writeFileSync(join(PUBLIC, "robots.txt"), "User-agent: *\nDisallow: /\n");
 } else {
-  const urls = kids.map((k) => `  <url>\n    <loc>${baseUrl}/${k.slug}/</loc>\n    <lastmod>${today}</lastmod>\n  </url>`).join("\n");
+  const urls = ["", ...kids.map((k) => `${k.slug}/`)]
+    .map((path) => `  <url>\n    <loc>${baseUrl}/${path}</loc>\n    <lastmod>${today}</lastmod>\n  </url>`).join("\n");
   writeFileSync(join(PUBLIC, "sitemap.xml"),
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
   writeFileSync(join(PUBLIC, "robots.txt"), `User-agent: *\nAllow: /\n\nSitemap: ${baseUrl}/sitemap.xml\n`);
@@ -226,4 +275,4 @@ console.log(`✔ Đã tạo ${kids.length} trang:`);
 for (const k of kids) {
   console.log(`  ${k.name.padEnd(16)} ${baseUrl}/${k.slug}/  (${k.isPhoto ? "ảnh chụp" : "ảnh minh hoạ"})`);
 }
-console.log(`  Trang chủ / hiển thị: ${defaultKid.name}`);
+console.log(`  Trang chủ  ${baseUrl}/  – danh sách ${kids.length} bé`);

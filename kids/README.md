@@ -79,7 +79,7 @@ Khi build, thư mục được tự sắp xếp lại:
 ## Ghi chú
 
 - `npm run build` cần Chrome hoặc Edge trên máy (đặt `CHROME_PATH` nếu không tự tìm thấy).
-- Trang chủ `/` hiển thị cháu ghi trong `site.json` → `defaultKid`.
+- Trang chủ `/` là danh sách tất cả các bé (từ `template/home.html`), mỗi bé có nút nghe nhanh.
 - Xoá một thư mục cháu rồi `npm run build` sẽ xoá luôn trang của cháu đó.
 - `site.json` → `"indexable": false` để không cho Google lập chỉ mục các trang (nên cân nhắc vì có tên và ảnh của trẻ).
 - Không sửa trực tiếp `public/<cháu>/index.html` – file này được tạo từ `template/index.html`.
