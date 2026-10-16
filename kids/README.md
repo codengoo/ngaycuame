@@ -5,7 +5,7 @@ Mỗi cháu là một thư mục trong `kids/`. Tên thư mục chính là đư�
 
 ```
 kids/<duong-dan>/
-  kid.json     tên, lời chúc, ngày
+  kid.json     tên, giới tính, lời chúc, ngày
   avatar.png   ảnh của cháu (.png / .jpg / .jpeg / .webp)
   audio.m4a    file ghi âm (.m4a / .mp3 / .wav / .ogg / .aac)
   transcript.json  tự tạo khi build – lời chúc chuyển từ file ghi âm
@@ -31,7 +31,7 @@ Khi build, thư mục được tự sắp xếp lại:
 - `kids/Minh Anh/` → `kids/minh-anh/` (đường dẫn trang), tên "Minh Anh" ghi vào `kid.json`.
   Nếu thư mục đặt sẵn kiểu `minh-anh` thì tên thành "Minh Anh" không dấu – sửa lại trong `kid.json`.
 - Ảnh → `avatar.*`, ghi âm → `audio.*`. Mỗi thư mục chỉ để **1** ảnh và **1** file ghi âm.
-  Không có ảnh thì dùng hình minh hoạ chung `template/avatar.png`.
+  Không có ảnh thì dùng hình minh hoạ chung theo giới tính: `template/avatar-boy.png` / `avatar-girl.png`.
 - Chưa có `kid.json` thì tự tạo; lời chúc lấy từ ghi âm (`transcript.json`).
 
 (`npm run new-kid -- "Minh Anh"` vẫn dùng được nếu muốn tạo sẵn thư mục.)
@@ -41,6 +41,7 @@ Khi build, thư mục được tự sắp xếp lại:
 ```json
 {
   "name": "Minh Anh",
+  "gender": "nữ",
   "wish": "Mẹ ơi, con chúc mẹ 20/10 luôn vui vẻ!\nCon yêu mẹ nhiều lắm ạ!",
   "date": "20/10/2026",
   "avatarFocus": "50% 30%"
@@ -48,6 +49,9 @@ Khi build, thư mục được tự sắp xếp lại:
 ```
 
 - `name` – tên hiển thị ("của bé …", "Con của mẹ, …", tiêu đề khi chia sẻ link).
+- `gender` – `"nam"` hoặc `"nữ"`, chọn hình minh hoạ khi cháu không có ảnh riêng. Thiếu thì build **tự đoán
+  theo tên** rồi ghi vào đây (tên chưa rõ trai hay gái như "Tuệ An", "Phúc Anh" sẽ được báo "đoán chưa chắc") –
+  đoán sai thì sửa tay, lần build sau giữ nguyên.
 - `wish` – tuỳ chọn, lời chúc gõ tay (nội dung ghi âm). `\n` để xuống dòng. Chữ được tô dần khi phát audio.
   Bỏ trống thì dùng lời chúc tự chuyển từ ghi âm (xem dưới).
 - `date` – ngày dưới tên (mặc định `20/10/2026`).

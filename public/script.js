@@ -284,6 +284,9 @@
         animate("#shareBtn", { scale: [0, 1], y: [10, 0] }, { ...spring(0.6, 0.8), delay: 0.95 });
         animate(likeBtn, { scale: [0, 1], rotate: [-40, 0] }, { ...spring(0.6, 0.8), delay: 1.05 });
       }, { amount: 0.25 });
+      inView("#videoBtn", ({ target }) => {
+        animate(target, { opacity: [0, 1], y: [16, 0], scale: [0.9, 1] }, spring(0.5, 0.8));
+      }, { amount: 0.6 });
 
       // --- Footer ---
       inView("#thanks", ({ target }) => {
@@ -766,6 +769,66 @@
 
   introOpen.addEventListener("click", closeIntro);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeIntro(); });
+
+  // ----- Wish video: preview in a dialog, then share the file or save it -----
+  const videoBtn = $("#videoBtn");
+  const vmodal = $("#vmodal");
+  const vVideo = $("#vmodalVideo");
+  const videoShare = $("#videoShare");
+  const videoSave = $("#videoSave");
+  const videoSrc = videoBtn.dataset.src;
+  let videoFile = null; // fetched once, so the share sheet can open right on the tap
+  const loadVideoFile = () => videoFile || (videoFile = fetch(videoSrc)
+    .then((r) => { if (!r.ok) throw new Error(r.status); return r.blob(); })
+    .then((b) => new File([b], videoSave.getAttribute("download"), { type: "video/mp4" }))
+    .catch((err) => { videoFile = null; throw err; }));
+
+  const openVideo = () => {
+    if (!vVideo.src) { vVideo.src = videoSrc; videoSave.href = videoSrc; }
+    audio.pause();
+    vmodal.hidden = false;
+    if (lenis) lenis.stop();
+    document.documentElement.style.overflow = "hidden";
+    vVideo.play().catch(() => {});
+    if (navigator.canShare) loadVideoFile().catch(() => {});
+    $("#vmodalClose").focus({ preventScroll: true });
+  };
+  const closeVideo = () => {
+    vVideo.pause();
+    vmodal.hidden = true;
+    if (lenis) lenis.start();
+    document.documentElement.style.overflow = "";
+    videoBtn.focus({ preventScroll: true });
+  };
+  if (videoSrc) {
+    videoBtn.addEventListener("click", openVideo);
+    $("#vmodalClose").addEventListener("click", closeVideo);
+    vmodal.addEventListener("click", (e) => { if (e.target === vmodal) closeVideo(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !vmodal.hidden) closeVideo(); });
+
+    // Share sheet with the file itself (save to Photos, Zalo, Messenger…); otherwise download
+    videoShare.addEventListener("click", async () => {
+      let file = null;
+      if (navigator.canShare) {
+        videoShare.setAttribute("aria-busy", "true");
+        showToast("Đang chuẩn bị video…");
+        try { file = await loadVideoFile(); } catch {}
+        videoShare.removeAttribute("aria-busy");
+      }
+      if (file && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: document.title });
+          return;
+        } catch (err) {
+          if (err.name === "AbortError") return; // user closed the share sheet
+          // The tap "expired" while the file was still downloading; it is ready now
+          if (err.name === "NotAllowedError") { showToast("Video đã sẵn sàng, bấm Chia sẻ lần nữa nhé"); return; }
+        }
+      }
+      videoSave.click();
+      showToast("Máy này chưa chia sẻ được video – đã tải video về");
+    });
+  }
 
   paint();
 })();

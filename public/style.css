@@ -377,6 +377,61 @@ body {
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+/* ---------- Wish video: button + preview dialog ---------- */
+.video-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  margin-top: 18px; padding: 12px 22px;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: #fff; color: var(--rose);
+  font-family: var(--f-body); font-weight: 700; font-size: 1rem;
+  box-shadow: 0 8px 22px rgba(232, 88, 122, .22), inset 0 0 0 1.5px var(--rose-soft);
+  transition: transform .15s;
+}
+.video-btn:active { transform: scale(.96); }
+.video-btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.video-btn[data-src=""] { display: none; }
+
+.vmodal {
+  position: fixed; inset: 0; z-index: 120;
+  display: grid; place-items: center; padding: 16px;
+  background: rgba(74, 44, 38, .6);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+}
+.vmodal[hidden] { display: none; }
+.vmodal__box {
+  position: relative;
+  width: min(100%, 380px);
+  padding: 12px 12px 14px;
+  border-radius: 24px;
+  background: var(--paper);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .3);
+}
+.vmodal__video {
+  display: block; width: 100%;
+  max-height: calc(100dvh - 150px);
+  aspect-ratio: 9 / 16; object-fit: contain;
+  border-radius: 16px; background: #fbe3e8;
+}
+.vmodal__close {
+  position: absolute; top: -14px; right: -10px; z-index: 1;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 3px solid #fff; background: var(--rose); cursor: pointer;
+  display: grid; place-items: center;
+  box-shadow: 0 4px 12px rgba(232, 88, 122, .4);
+}
+.vmodal__close svg { width: 18px; height: 18px; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; }
+.vmodal__actions { display: flex; gap: 10px; margin-top: 12px; }
+.vbtn {
+  flex: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 12px; border-radius: 999px; cursor: pointer;
+  border: 1.5px solid var(--rose-soft); background: #fff; color: var(--rose);
+  font-family: var(--f-body); font-weight: 700; font-size: .98rem; text-decoration: none;
+}
+.vbtn--primary { border-color: var(--rose); background: var(--rose); color: #fff; }
+.vbtn[aria-busy="true"] { opacity: .65; pointer-events: none; }
+.vbtn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
 /* ---------- Footer ---------- */
 .thanks { margin-top: 34px; color: var(--rose); }
 .thanks__rule { display: flex; align-items: center; justify-content: center; gap: 12px; }

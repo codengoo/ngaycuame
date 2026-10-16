@@ -1,6 +1,8 @@
 // Builds one greeting page per kid.
 //
-//   kids/<slug>/kid.json      { "name", "wish"?, "date"?, "avatarFocus"? } – created if missing
+//   kids/<slug>/kid.json      { "name", "gender"?, "wish"?, "date"?, "avatarFocus"? } – created if missing;
+//                             "gender" ("nam" / "nữ") is guessed from the name when missing
+//                             and picks the default avatar (template/avatar-boy|girl.png)
 //   kids/<slug>/avatar.*      png / jpg / jpeg / webp    (any file name; renamed; optional)
 //   kids/<slug>/audio.*       m4a / mp3 / wav / ogg / aac (any file name; renamed)
 //   kids/<slug>/transcript.json  generated from audio.* (see transcribe.mjs);
@@ -22,6 +24,7 @@ import { dirname, extname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import QRCode from "qrcode";
 import { withChrome } from "./chrome.mjs";
+import { guessGender } from "./gender.mjs";
 import { isSlug, slugify, titleFromSlug } from "./slug.mjs";
 import { alignWish, transcribeKids } from "./transcribe.mjs";
 import { renderVideo, VIDEO_SOURCES } from "./video.mjs";
@@ -44,7 +47,8 @@ const CSS_V = assetVersion("style.css");
 const JS_V = assetVersion("script.js");
 
 // Illustration for kids without their own photo
-const DEFAULT_AVATAR = join(ROOT, "template", "avatar.png");
+const DEFAULT_AVATARS = { nam: join(ROOT, "template", "avatar-boy.png"), nữ: join(ROOT, "template", "avatar-girl.png") };
+const DEFAULT_AVATAR = DEFAULT_AVATARS.nữ; // home page share preview
 const AVATAR_EXT = [".png", ".jpg", ".jpeg", ".webp"];
 const AUDIO_TYPES = { ".m4a": "audio/mp4", ".mp3": "audio/mpeg", ".wav": "audio/wav", ".ogg": "audio/ogg", ".aac": "audio/aac" };
 
@@ -56,7 +60,7 @@ const fail = (msg) => { console.error(`✖ ${msg}`); process.exit(1); };
 
 // ---------- Read kids ----------
 // A new kid only needs a folder with a recording (and optionally one image,
-// otherwise template/avatar.png is used), e.g. kids/Huyền My/{IMG_0123.png, Huyền My.m4a}. It is tidied up in place:
+// otherwise template/avatar-boy.png or avatar-girl.png by gender), e.g. kids/Huyền My/{IMG_0123.png, Huyền My.m4a}. It is tidied up in place:
 // the folder becomes kids/huyen-my/ (its original name is kept as the kid's
 // name), the files become avatar.* / audio.*, and kid.json is created.
 
@@ -89,7 +93,6 @@ const kids = readdirSync(KIDS_DIR, { withFileTypes: true })
       console.log(`↻ kids/${folder}/ → kids/${slug}/`);
     }
     const dir = join(KIDS_DIR, slug);
-    const avatar = claimFile(dir, slug, "avatar", AVATAR_EXT, DEFAULT_AVATAR);
     const audio = claimFile(dir, slug, "audio", Object.keys(AUDIO_TYPES));
     const jsonPath = join(dir, "kid.json");
     if (!existsSync(jsonPath)) {
@@ -99,6 +102,16 @@ const kids = readdirSync(KIDS_DIR, { withFileTypes: true })
     }
     const kid = JSON.parse(readFileSync(jsonPath, "utf8"));
     if (!kid.name?.trim()) fail(`kids/${slug}/kid.json: thiếu "name"`);
+    // Boy or girl: guessed once from the name and saved, so it can be corrected by hand
+    if (!kid.gender) {
+      const g = guessGender(kid.name);
+      const { name, ...rest } = kid;
+      writeFileSync(jsonPath, JSON.stringify({ name, gender: g.gender, ...rest }, null, 2) + "\n");
+      kid.gender = g.gender;
+      console.log(`✚ kids/${slug}/kid.json: "${kid.name}" → bé ${g.gender === "nam" ? "trai" : "gái"}${g.sure ? "" : " (đoán chưa chắc – sửa \"gender\" nếu sai)"}`);
+    }
+    if (!DEFAULT_AVATARS[kid.gender]) fail(`kids/${slug}/kid.json: "gender" phải là "nam" hoặc "nữ"`);
+    const avatar = claimFile(dir, slug, "avatar", AVATAR_EXT, DEFAULT_AVATARS[kid.gender]);
     return { slug, dir, avatar, audio, ...kid };
   });
 
@@ -216,6 +229,7 @@ const render = (kid, pageUrl) => {
     AVATAR_H: String(kid.avatarH),
     AVATAR_FOCUS: esc(kid.avatarFocus || "50% 30%"),
     AUDIO_URL: esc(audioUrl),
+    VIDEO_URL: kid.videoKey ? esc(`/${kid.slug}/video.mp4?v=${kid.videoKey}`) : "",
     CSS_V,
     JS_V,
     BODY_CLASS: kid.isPhoto ? "kid-photo" : "kid-illustration",
@@ -262,34 +276,8 @@ const renderHome = () => {
   });
 };
 
-for (const kid of kids) {
-  const out = join(PUBLIC, kid.slug);
-  const ext = extname(kid.audio).toLowerCase();
-  // Remove a previous recording with a different extension
-  for (const e of Object.keys(AUDIO_TYPES)) {
-    if (e !== ext) rmSync(join(out, "audio" + e), { force: true });
-  }
-  copyFileSync(kid.audio, join(out, "audio" + ext));
-  kid.audioHash = hash(readFileSync(kid.audio));
-  writeFileSync(join(out, "index.html"), render(kid, `${baseUrl}/${kid.slug}/`));
-}
-
-writeFileSync(join(PUBLIC, "index.html"), renderHome());
-
-// ---------- Sitemap / robots ----------
-const today = new Date().toISOString().slice(0, 10);
-if (site.indexable === false) {
-  rmSync(join(PUBLIC, "sitemap.xml"), { force: true });
-  writeFileSync(join(PUBLIC, "robots.txt"), "User-agent: *\nDisallow: /\n");
-} else {
-  const urls = ["", ...kids.map((k) => `${k.slug}/`)]
-    .map((path) => `  <url>\n    <loc>${baseUrl}/${path}</loc>\n    <lastmod>${today}</lastmod>\n  </url>`).join("\n");
-  writeFileSync(join(PUBLIC, "sitemap.xml"),
-    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
-  writeFileSync(join(PUBLIC, "robots.txt"), `User-agent: *\nAllow: /\n\nSitemap: ${baseUrl}/sitemap.xml\n`);
-}
-
 // ---------- Videos (only the ones missing or out of date) ----------
+for (const kid of kids) kid.audioHash = hash(readFileSync(kid.audio));
 if (process.env.NO_VIDEO) {
   console.log("– Bỏ qua video (NO_VIDEO)");
 } else {
@@ -322,9 +310,37 @@ if (process.env.NO_VIDEO) {
       }
     });
   }
+  // Pages link a video only when it exists; the key versions its URL
+  for (const j of jobs) if (existsSync(j.out) && cache[j.kid.slug] === j.key) j.kid.videoKey = j.key;
   // Forget kids that were removed
   for (const slug of Object.keys(cache)) if (!kids.some((k) => k.slug === slug)) delete cache[slug];
   writeFileSync(VIDEO_CACHE, JSON.stringify(cache, null, 2) + "\n");
+}
+
+for (const kid of kids) {
+  const out = join(PUBLIC, kid.slug);
+  const ext = extname(kid.audio).toLowerCase();
+  // Remove a previous recording with a different extension
+  for (const e of Object.keys(AUDIO_TYPES)) {
+    if (e !== ext) rmSync(join(out, "audio" + e), { force: true });
+  }
+  copyFileSync(kid.audio, join(out, "audio" + ext));
+  writeFileSync(join(out, "index.html"), render(kid, `${baseUrl}/${kid.slug}/`));
+}
+
+writeFileSync(join(PUBLIC, "index.html"), renderHome());
+
+// ---------- Sitemap / robots ----------
+const today = new Date().toISOString().slice(0, 10);
+if (site.indexable === false) {
+  rmSync(join(PUBLIC, "sitemap.xml"), { force: true });
+  writeFileSync(join(PUBLIC, "robots.txt"), "User-agent: *\nDisallow: /\n");
+} else {
+  const urls = ["", ...kids.map((k) => `${k.slug}/`)]
+    .map((path) => `  <url>\n    <loc>${baseUrl}/${path}</loc>\n    <lastmod>${today}</lastmod>\n  </url>`).join("\n");
+  writeFileSync(join(PUBLIC, "sitemap.xml"),
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
+  writeFileSync(join(PUBLIC, "robots.txt"), `User-agent: *\nAllow: /\n\nSitemap: ${baseUrl}/sitemap.xml\n`);
 }
 
 writeFileSync(MANIFEST, JSON.stringify(kids.map((k) => k.slug), null, 2) + "\n");
