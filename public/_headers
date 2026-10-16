@@ -1,4 +1,4 @@
-# Read by both Cloudflare Workers Static Assets and Cloudflare Pages
+# Read by Cloudflare Workers Static Assets
 
 /*
   X-Content-Type-Options: nosniff

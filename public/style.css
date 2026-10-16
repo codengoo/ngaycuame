@@ -81,9 +81,13 @@ body {
 .sender__actions { margin-left: auto; display: flex; align-items: center; gap: 2px; }
 
 .like {
-  width: 44px; height: 44px;
+  min-width: 44px; height: 44px; padding: 0 4px;
   border: 0; background: none; cursor: pointer;
-  display: grid; place-items: center;
+  display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+}
+.like__count {
+  font-family: var(--f-body); font-weight: 600; font-size: .95rem;
+  color: var(--rose); font-variant-numeric: tabular-nums;
 }
 .like svg { width: 30px; height: 30px; fill: transparent; stroke: var(--rose); stroke-width: 1.6; transition: fill .25s; }
 .like[aria-pressed="true"] svg { fill: var(--rose); }

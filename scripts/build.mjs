@@ -11,7 +11,9 @@
 //   public/<slug>/index.html, avatar.webp, og.jpg, audio.<ext>
 //   public/index.html, og.jpg = list of all kids (template/home.html)
 //   public/sitemap.xml, public/robots.txt
-//   QR/<slug>.png = QR code (transparent background) of each kid's prod link – not deployed, git-ignored
+//   public/<slug>/video.mp4 = 9:16 wish video to download (scripts/video.mjs); rendered when
+//                             missing or when its inputs changed – git-ignored, set NO_VIDEO=1 to skip
+//   QR/<slug>.png = printable card with the QR code of each kid's prod link and their name (scripts/qr.html) – not deployed, git-ignored
 //
 // Needs a local Chrome/Edge (set CHROME_PATH if it isn't found).
 import { createHash } from "node:crypto";
@@ -22,12 +24,15 @@ import QRCode from "qrcode";
 import { withChrome } from "./chrome.mjs";
 import { isSlug, slugify, titleFromSlug } from "./slug.mjs";
 import { alignWish, transcribeKids } from "./transcribe.mjs";
+import { renderVideo, VIDEO_SOURCES } from "./video.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const KIDS_DIR = join(ROOT, "kids");
 const PUBLIC = join(ROOT, "public");
 const MANIFEST = join(ROOT, "scripts", ".generated.json");
 const QR_DIR = join(ROOT, "QR");
+// What each video.mp4 was rendered from (git-ignored like the videos)
+const VIDEO_CACHE = join(ROOT, "scripts", ".videos.json");
 
 const site = JSON.parse(readFileSync(join(ROOT, "site.json"), "utf8"));
 const baseUrl = site.baseUrl.replace(/\/+$/, "");
@@ -144,6 +149,17 @@ await withChrome(async (page) => {
   const og = await page.screenshotJpeg(90);
   writeFileSync(join(PUBLIC, "og.jpg"), og);
   homeOgHash = hash(og);
+
+  // QR card of each kid's prod link (rebuilt from scratch so deleted kids disappear)
+  rmSync(QR_DIR, { recursive: true, force: true });
+  mkdirSync(QR_DIR);
+  await page.goto(pathToFileURL(join(ROOT, "scripts", "qr.html")).href);
+  for (const kid of kids) {
+    const { size, data } = QRCode.create(`${baseUrl}/${kid.slug}/`, { errorCorrectionLevel: "M" }).modules;
+    const modules = Array.from({ length: size }, (_, y) => Array.from(data.subarray(y * size, (y + 1) * size)));
+    const png = await page.eval(`renderQrCard(${JSON.stringify(modules)}, ${JSON.stringify(kid.name)})`);
+    writeFileSync(join(QR_DIR, `${kid.slug}.png`), Buffer.from(png.split(",")[1], "base64"));
+  }
 });
 
 // ---------- Pages ----------
@@ -188,6 +204,7 @@ const render = (kid, pageUrl) => {
 
   const values = {
     NAME: esc(kid.name),
+    SLUG: esc(kid.slug),
     WISH_HTML: lines.map(esc).join("<br>\n        "),
     WISH_ONE_LINE: esc(oneLine),
     WISH_TIMING: kid.timing ? esc(JSON.stringify(kid.timing)) : "",
@@ -272,16 +289,42 @@ if (site.indexable === false) {
   writeFileSync(join(PUBLIC, "robots.txt"), `User-agent: *\nAllow: /\n\nSitemap: ${baseUrl}/sitemap.xml\n`);
 }
 
-// ---------- QR codes of the prod links (rebuilt from scratch so deleted kids disappear) ----------
-rmSync(QR_DIR, { recursive: true, force: true });
-mkdirSync(QR_DIR);
-for (const kid of kids) {
-  await QRCode.toFile(join(QR_DIR, `${kid.slug}.png`), `${baseUrl}/${kid.slug}/`, {
-    width: 1024,
-    margin: 2,
-    errorCorrectionLevel: "M",
-    color: { dark: "#000000ff", light: "#00000000" },
+// ---------- Videos (only the ones missing or out of date) ----------
+if (process.env.NO_VIDEO) {
+  console.log("– Bỏ qua video (NO_VIDEO)");
+} else {
+  const cache = existsSync(VIDEO_CACHE) ? JSON.parse(readFileSync(VIDEO_CACHE, "utf8")) : {};
+  const sources = hash(Buffer.concat(VIDEO_SOURCES.map((f) => readFileSync(f))));
+  const jobs = kids.map((kid) => {
+    const video = {
+      slug: kid.slug, name: kid.name, isPhoto: kid.isPhoto,
+      lines: wishLines(kid).map((l) => l.split(/\s+/)),
+      timing: kid.timing,
+      url: `${baseUrl}/${kid.slug}/`,
+      audio: kid.audio,
+      avatar: join(PUBLIC, kid.slug, "avatar.webp"),
+      qr: join(QR_DIR, `${kid.slug}.png`),
+    };
+    // Paths stand in for their content: audio/avatar by hash, the QR by name + url
+    const key = hash(JSON.stringify({ ...video, audio: kid.audioHash, avatar: kid.avatarHash, qr: undefined, sources }));
+    const out = join(PUBLIC, kid.slug, "video.mp4");
+    return { kid, video, key, out, todo: cache[kid.slug] !== key || !existsSync(out) };
   });
+  const todo = jobs.filter((j) => j.todo);
+  if (todo.length) {
+    await withChrome(async (page) => {
+      for (const [i, j] of todo.entries()) {
+        const t0 = Date.now();
+        const r = await renderVideo(page, j.video, j.out);
+        cache[j.kid.slug] = j.key;
+        writeFileSync(VIDEO_CACHE, JSON.stringify(cache, null, 2) + "\n");
+        console.log(`🎬 [${i + 1}/${todo.length}] /${j.kid.slug}/video.mp4 – ${r.duration.toFixed(1)}s (${((Date.now() - t0) / 1000).toFixed(0)}s render)`);
+      }
+    });
+  }
+  // Forget kids that were removed
+  for (const slug of Object.keys(cache)) if (!kids.some((k) => k.slug === slug)) delete cache[slug];
+  writeFileSync(VIDEO_CACHE, JSON.stringify(cache, null, 2) + "\n");
 }
 
 writeFileSync(MANIFEST, JSON.stringify(kids.map((k) => k.slug), null, 2) + "\n");

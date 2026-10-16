@@ -1,0 +1,331 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- Build helper page (not deployed): draws one frame of a kid's 9:16 wish
+     video for a given time t (renderFrame), so frames are exact and repeatable.
+     Driven by scripts/video.mjs through headless Chrome. Layout is in a
+     540×960 box zoomed ×2 to the 1080×1920 video. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600&family=Patrick+Hand&family=Quicksand:wght@500;600;700&display=block&subset=vietnamese">
+<style>
+  @font-face { font-family: "Fz Fragrant"; src: url("../public/fonts/fz-fragrant.otf"); font-display: block; }
+  @font-face { font-family: "Fz Donsky"; src: url("../public/fonts/fz-donsky.ttf"); font-display: block; }
+  @font-face { font-family: "Fz Yustine Signature"; src: url("../public/fonts/fz-yustine-signature.ttf"); font-display: block; }
+
+  :root {
+    --rose: #e8587a; --rose-soft: #f6c9d3; --blush: #fbe3e8;
+    --ink: #4a2c26; --ink-soft: #6b4f49; --muted: #8a7772;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; }
+  .v {
+    zoom: 2; position: relative; width: 540px; height: 960px; overflow: hidden;
+    background: #fdf5ee url("../public/images/nen-doc-20-10.webp") center / cover no-repeat;
+    font-family: "Quicksand", sans-serif; color: var(--ink); text-align: center;
+  }
+  .scene { position: absolute; inset: 0; }
+
+  /* Floating hearts */
+  .hearts { position: absolute; inset: 0; pointer-events: none; }
+  .hearts svg { position: absolute; left: 0; top: 0; fill: var(--rose); }
+
+  /* Date band */
+  .date {
+    position: absolute; top: 34px; left: 0; right: 0;
+    font-family: "Fz Donsky", "Baloo 2"; font-size: 58px; line-height: 1; color: var(--rose);
+  }
+  .date::before {
+    content: ""; position: absolute; left: 50%; top: 50%; width: 260px; height: 56px; translate: -50% -46%; z-index: -1;
+    background: linear-gradient(90deg, transparent, var(--blush) 14%, #f8d3db 50%, var(--blush) 86%, transparent);
+    border-radius: 40% 60% 45% 55% / 60% 40% 60% 40%; filter: blur(1.5px);
+  }
+
+  /* Avatar */
+  .hero { position: absolute; left: 50%; top: 104px; width: 330px; height: 330px; translate: -50% 0; }
+  .hero img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 84%, transparent 100%); }
+  .photo .hero img {
+    object-fit: cover; border-radius: 50%; border: 8px solid #fff; -webkit-mask-image: none;
+    box-shadow: 0 0 0 10px rgba(255,255,255,.45), 0 18px 40px rgba(232,88,122,.3);
+  }
+  .note {
+    position: absolute; right: 26px; top: 150px; rotate: -12deg; text-align: left;
+    font-family: "Fz Yustine Signature", "Patrick Hand"; font-size: 36px; line-height: 1.12;
+    color: var(--rose); -webkit-text-stroke: .5px currentColor;
+  }
+
+  /* Title */
+  .title { position: absolute; left: 0; right: 0; top: 446px; }
+  .title p { font-family: "Patrick Hand"; font-size: 23px; color: var(--ink-soft); }
+  .title h1 {
+    font-family: "Fz Fragrant", "Baloo 2"; font-weight: 400; font-size: 46px; line-height: 1.15; color: var(--rose);
+    font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0, "dlig" 0;
+  }
+
+  /* Card: waveform + wish */
+  .card {
+    position: absolute; left: 26px; right: 26px; top: 552px; padding: 22px 24px 24px; text-align: left;
+    background: rgba(255,249,247,.86); border: 1px solid rgba(255,255,255,.9); border-radius: 28px;
+    box-shadow: 0 14px 40px rgba(201,120,135,.18), 0 2px 6px rgba(201,120,135,.08);
+  }
+  .player { display: flex; align-items: center; gap: 14px; }
+  .play {
+    flex: none; width: 58px; height: 58px; border-radius: 50%; border: 4px solid #fff; background: var(--rose);
+    display: grid; place-items: center; box-shadow: 0 6px 16px rgba(232,88,122,.35);
+  }
+  .play svg { width: 24px; height: 24px; fill: #fff; }
+  .wave { position: relative; flex: 1; height: 46px; }
+  .wave div { position: absolute; inset: 0; display: flex; align-items: center; gap: 2px; }
+  .wave i { flex: 1; min-height: 3px; border-radius: 2px; background: var(--rose-soft); }
+  .wave .fill i { background: var(--rose); }
+  .time {
+    flex: none; font-weight: 600; font-size: 15px; color: var(--ink-soft); font-variant-numeric: tabular-nums;
+    background: rgba(246,201,211,.38); padding: 6px 12px; border-radius: 999px;
+  }
+  .wish { margin-top: 18px; font-family: "Patrick Hand"; font-size: 27px; line-height: 1.42; }
+  .wish b {
+    font-weight: 400; color: transparent; -webkit-background-clip: text; background-clip: text;
+    background-image: linear-gradient(90deg, var(--ink) var(--f), rgba(74,44,38,.2) var(--f));
+  }
+
+  .url { position: absolute; left: 0; right: 0; bottom: 30px; font-weight: 600; font-size: 17px; color: var(--ink-soft); }
+  .url span { color: var(--rose); }
+
+  /* Outro: QR card */
+  .outro { display: grid; place-content: center; justify-items: center; gap: 22px; }
+  .outro::before { content: ""; position: absolute; inset: 0; z-index: -1; background: rgba(253,245,238,.72); }
+  .outro img { width: 300px; filter: drop-shadow(0 16px 36px rgba(201,120,135,.3)); }
+  .outro p { font-family: "Fz Yustine Signature", "Patrick Hand"; font-size: 40px; line-height: 1.15; color: var(--rose); -webkit-text-stroke: .5px currentColor; }
+  .outro small { font-weight: 600; font-size: 18px; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="v" id="v">
+  <div class="scene" id="main">
+    <div class="hearts" id="hearts"></div>
+    <div class="date">20/10</div>
+    <div class="hero" id="hero"><img id="avatar" alt=""></div>
+    <p class="note" id="note">Con yêu mẹ<br>rất nhiều!</p>
+    <div class="title" id="title"><p>Lời chúc nhỏ của bé</p><h1 id="name"></h1></div>
+    <div class="card" id="card">
+      <div class="player">
+        <span class="play"><svg viewBox="0 0 24 24"><rect x="6.5" y="5" width="4" height="14" rx="1.4"/><rect x="13.5" y="5" width="4" height="14" rx="1.4"/></svg></span>
+        <div class="wave"><div class="base" id="base"></div><div class="fill" id="fill"></div></div>
+        <span class="time" id="time">00:00</span>
+      </div>
+      <p class="wish" id="wish"></p>
+    </div>
+    <p class="url" id="url"></p>
+  </div>
+  <div class="scene outro" id="outro">
+    <img id="qr" alt="">
+    <p>Quét mã để nghe<br>lời chúc của con</p>
+    <small id="url2"></small>
+  </div>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const ease = (v) => 1 - Math.pow(1 - clamp(v), 3);
+  let S; // scene settings from setup()
+
+  // Seeded random so every render places the hearts the same way
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  const HEART = '<path d="M12 21s-7.5-4.6-10-9.3C.3 8.3 2.2 4 6.2 4c2.4 0 4 1.4 5.8 3.6C13.8 5.4 15.4 4 17.8 4c4 0 5.9 4.3 4.2 7.7C19.5 16.4 12 21 12 21z"/>';
+  const hearts = Array.from({ length: 16 }, () => ({
+    x: 20 + rnd() * 500, size: 12 + rnd() * 18, speed: 26 + rnd() * 30, phase: rnd() * 1100,
+    sway: 8 + rnd() * 14, swayHz: .2 + rnd() * .3, alpha: .25 + rnd() * .45, rot: -25 + rnd() * 50,
+  }));
+
+  // opts: { name, lines: [[word…]…], timing: [[s,e]…] | null, peaks: [0..1], duration, lead,
+  //         avatar, qr, url, isPhoto }
+  async function setup(opts) {
+    S = opts;
+    $("v").classList.toggle("photo", !!opts.isPhoto);
+    $("name").textContent = opts.name;
+    $("url").innerHTML = opts.url.replace(/^(.*\/)([^/]+\/?)$/, "$1<span>$2</span>");
+    $("url2").textContent = opts.url;
+    $("hearts").innerHTML = hearts.map((h) => `<svg viewBox="0 0 24 24" width="${h.size}" height="${h.size}">${HEART}</svg>`).join("");
+
+    // Wish: one <b> per word; lines kept as in the page
+    let k = 0;
+    $("wish").innerHTML = "“" + opts.lines.map((ws) => ws.map((w) => `<b data-k="${k++}">${w.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</b>`).join(" ")).join("<br>") + "”";
+    S.words = [...$("wish").querySelectorAll("b")];
+    // Without word timing, spread the words evenly over the recording
+    if (!S.timing) S.timing = S.words.map((_, i) => [i / S.words.length * S.duration, (i + 1) / S.words.length * S.duration]);
+
+    const bars = opts.peaks.map((v) => `<i style="height:${v < .02 ? 0 : 12 + 88 * Math.pow(v, .75)}%"></i>`).join("");
+    $("base").innerHTML = $("fill").innerHTML = bars;
+
+    const load = (img, src) => new Promise((r) => { img.onload = img.onerror = r; img.src = src; });
+    await Promise.all([load($("avatar"), opts.avatar), load($("qr"), opts.qr)]);
+    await document.fonts.ready;
+    // Shrink long wishes so the card never runs into the footer
+    for (let size = 27; $("card").getBoundingClientRect().bottom / 2 > 900 && size > 16; size--) $("wish").style.fontSize = size + "px";
+    return true;
+  }
+
+  const mmss = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+  function renderFrame(t) {
+    const a = t - S.lead; // time in the recording
+    const p = clamp(a / S.duration);
+
+    // Intro: everything eases in over the lead-in
+    const intro = ease(t / .7);
+    $("hero").style.transform = `translateY(${(1 - intro) * 30 + Math.sin(t * 1.6) * 4}px) scale(${.85 + .15 * intro})`;
+    $("hero").style.opacity = intro;
+    $("note").style.opacity = ease((t - .3) / .5);
+    $("title").style.opacity = ease((t - .15) / .5);
+    $("card").style.transform = `translateY(${(1 - ease((t - .2) / .6)) * 40}px)`;
+    $("card").style.opacity = ease((t - .2) / .5);
+
+    // Waveform + clock
+    $("fill").style.clipPath = `inset(0 ${100 - p * 100}% 0 0)`;
+    $("time").textContent = mmss(clamp(a, 0, S.duration));
+
+    // Karaoke: each word fills left→right over its own time span
+    S.words.forEach((w, i) => {
+      const [s, e] = S.timing[i];
+      w.style.setProperty("--f", (e > s ? clamp((a - s) / (e - s)) : a >= s ? 1 : 0) * 100 + "%");
+    });
+
+    // Hearts drift up the whole time
+    [...$("hearts").children].forEach((el, i) => {
+      const h = hearts[i];
+      const y = 1000 - ((h.phase + t * h.speed) % 1100);
+      const x = h.x + Math.sin(t * h.swayHz * 6.28 + i) * h.sway;
+      el.style.transform = `translate(${x}px, ${y}px) rotate(${h.rot}deg)`;
+      el.style.opacity = h.alpha * intro;
+    });
+
+    // Outro: QR card fades in after the recording
+    const o = ease((a - S.duration - .25) / .5);
+    $("outro").style.opacity = o;
+    $("outro").style.transform = `scale(${.94 + .06 * o})`;
+    $("main").style.filter = o ? `blur(${o * 6}px)` : "";
+    return true;
+  }
+
+  // ---------- Background music (composed here, so there is nothing to license) ----------
+  // A soft music-box lullaby over C – Am – F – G plus a little chime when the QR card
+  // appears. envelope: [[t, level]…] volume curve (from video.mjs: low under the voice,
+  // up for the QR card, fade out). tune: false renders only the chime, for when a music
+  // file is used instead. Returns a 16-bit stereo WAV as base64.
+  async function renderMusic({ total, outroAt, envelope, tune = true }) {
+    const SR = 44100;
+    const ctx = new OfflineAudioContext(2, Math.ceil(total * SR), SR);
+    const hz = (midi) => 440 * Math.pow(2, (midi - 69) / 12);
+
+    // Master level follows the envelope; the chime alone plays at a fixed level
+    const master = ctx.createGain();
+    const g = master.gain;
+    if (tune) {
+      g.setValueAtTime(envelope[0][1], envelope[0][0]);
+      envelope.slice(1).forEach(([t, v]) => g.linearRampToValueAtTime(v, t));
+    } else {
+      g.setValueAtTime(0.9, 0);
+      g.setValueAtTime(0.9, total - 1.0);
+      g.linearRampToValueAtTime(0, total);
+    }
+
+    // Room: synthetic reverb (decaying stereo noise) mixed with the dry signal
+    const verb = ctx.createConvolver();
+    const ir = ctx.createBuffer(2, SR * 2.4, SR);
+    for (let c = 0; c < 2; c++) {
+      const d = ir.getChannelData(c);
+      for (let i = 0; i < d.length; i++) d[i] = (rnd() * 2 - 1) * Math.pow(1 - i / d.length, 3.2);
+    }
+    verb.buffer = ir;
+    const wet = ctx.createGain(); wet.gain.value = 0.32;
+    const bus = ctx.createGain();
+    bus.connect(master); bus.connect(verb); verb.connect(wet); wet.connect(master);
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.ratio.value = 3;
+    master.connect(comp); comp.connect(ctx.destination);
+
+    // Music-box tine: a few partials with a fast attack and a long ring
+    const bell = (midi, t, vel = 1, pan = 0) => {
+      if (t >= total) return;
+      const f = hz(midi), p = ctx.createStereoPanner(), env = ctx.createGain();
+      p.pan.value = pan; env.connect(p); p.connect(bus);
+      const ring = 1.6 * Math.pow(440 / f, 0.35);
+      env.gain.setValueAtTime(0, t);
+      env.gain.linearRampToValueAtTime(0.22 * vel, t + 0.004);
+      env.gain.exponentialRampToValueAtTime(0.0008, t + ring);
+      [[1, 1], [2, 0.32], [3.01, 0.1], [5.4, 0.035]].forEach(([mul, amp]) => {
+        const o = ctx.createOscillator(), a = ctx.createGain();
+        o.frequency.value = f * mul; a.gain.value = amp;
+        o.connect(a); a.connect(env); o.start(t); o.stop(t + ring + 0.05);
+      });
+    };
+    // Warm pad under each chord
+    const pad = (notes, t, len) => {
+      const lp = ctx.createBiquadFilter(), env = ctx.createGain();
+      lp.type = "lowpass"; lp.frequency.value = 900;
+      lp.connect(env); env.connect(bus);
+      env.gain.setValueAtTime(0, t);
+      env.gain.linearRampToValueAtTime(0.05, t + 0.7);
+      env.gain.setValueAtTime(0.05, t + len - 0.5);
+      env.gain.linearRampToValueAtTime(0, t + len + 0.3);
+      notes.forEach((n, i) => {
+        const o = ctx.createOscillator();
+        o.type = "triangle"; o.frequency.value = hz(n); o.detune.value = (i - 1) * 4;
+        o.connect(lp); o.start(t); o.stop(t + len + 0.4);
+      });
+    };
+
+    // C – Am – F – G, one bar each at 84 bpm; eighth-note arpeggio on the music box
+    const BEAT = 60 / 84, BAR = BEAT * 4;
+    const CHORDS = [[60, 64, 67], [57, 60, 64], [53, 57, 60], [55, 59, 62]];
+    const ARP = [0, 1, 2, 1, 3, 1, 2, 1]; // chord tones; 3 = root an octave up
+    for (let bar = 0; tune && bar * BAR < total; bar++) {
+      const t0 = bar * BAR, ch = CHORDS[bar % 4];
+      pad(ch.map((n) => n - 12), t0, BAR);
+      bell(ch[0] - 24, t0, 0.55); // soft bass
+      ARP.forEach((k, i) => {
+        const note = (k === 3 ? ch[0] + 12 : ch[k]) + 12;
+        bell(note, t0 + i * BEAT / 2, i % 2 ? 0.55 : 0.85, i % 2 ? 0.25 : -0.25);
+      });
+    }
+
+    // Sparkle as the QR card appears: quick rising chime
+    [84, 88, 91, 96, 100].forEach((n, i) => bell(n, outroAt + i * 0.07, 0.9 - i * 0.1, -0.4 + i * 0.2));
+    bell(72, outroAt + 0.4, 0.8);
+
+    const buf = await ctx.startRendering();
+    // 16-bit PCM WAV
+    const L = buf.getChannelData(0), R = buf.getChannelData(1), n = L.length;
+    const view = new DataView(new ArrayBuffer(44 + n * 4));
+    const str = (o, s) => [...s].forEach((c, i) => view.setUint8(o + i, c.charCodeAt(0)));
+    str(0, "RIFF"); view.setUint32(4, 36 + n * 4, true); str(8, "WAVEfmt ");
+    view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 2, true);
+    view.setUint32(24, SR, true); view.setUint32(28, SR * 4, true); view.setUint16(32, 4, true); view.setUint16(34, 16, true);
+    str(36, "data"); view.setUint32(40, n * 4, true);
+    for (let i = 0; i < n; i++) {
+      view.setInt16(44 + i * 4, Math.max(-1, Math.min(1, L[i])) * 32767, true);
+      view.setInt16(46 + i * 4, Math.max(-1, Math.min(1, R[i])) * 32767, true);
+    }
+    const bytes = new Uint8Array(view.buffer);
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+
+  // Loudness of N equal slices of a recording (base64), 0..1
+  async function audioPeaks(b64, n) {
+    const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const buf = await new OfflineAudioContext(1, 1, 44100).decodeAudioData(bin.buffer);
+    const d = buf.getChannelData(0), step = Math.floor(d.length / n), out = [];
+    for (let i = 0; i < n; i++) {
+      let s = 0;
+      for (let j = i * step; j < (i + 1) * step; j++) s += d[j] * d[j];
+      out.push(Math.sqrt(s / step));
+    }
+    const max = Math.max(...out) || 1;
+    return { duration: buf.duration, peaks: out.map((v) => v / max) };
+  }
+</script>
+</body>
+</html>

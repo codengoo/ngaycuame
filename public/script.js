@@ -3,9 +3,10 @@
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const useMotion = !!M && !reduceMotion;
 
-  // ----- Momentum (inertia) scrolling -----
+  // ----- Momentum (inertia) scrolling – mouse/trackpad only; touch screens scroll natively -----
   let lenis = null;
-  if (window.Lenis && !reduceMotion) {
+  const touchScreen = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+  if (window.Lenis && !reduceMotion && !touchScreen) {
     lenis = new window.Lenis({ lerp: 0.08, wheelMultiplier: 1, smoothWheel: true });
     const raf = (t) => { lenis.raf(t); requestAnimationFrame(raf); };
     requestAnimationFrame(raf);
@@ -485,10 +486,40 @@
     paint();
   });
 
-  // ----- Like button: pop + burst of little hearts -----
+  // ----- Like button: shared heart counter (/api/likes) + pop + burst of little hearts -----
+  // One heart per IP: the server knows whether this visitor's IP already gave one
+  const slug = document.body.dataset.slug;
+  const likeCount = $("#likeCount");
+  let likes = null;
+  let likeReq = 0; // only the latest answer is shown when hearts are toggled quickly
+  const showLikes = (d) => {
+    if (d) {
+      likes = d.count;
+      likeBtn.setAttribute("aria-pressed", String(d.liked));
+    }
+    likeCount.hidden = !likes;
+    likeCount.textContent = likes || "";
+    likeBtn.setAttribute("aria-label", likes ? `Thả tim (${likes} tim)` : "Thả tim");
+  };
+  fetch(`/api/likes/${slug}`)
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => { if (d && !likeReq) showLikes(d); })
+    .catch(() => {});
+
   likeBtn.addEventListener("click", () => {
     const on = likeBtn.getAttribute("aria-pressed") !== "true";
     likeBtn.setAttribute("aria-pressed", String(on));
+    likes = Math.max(0, (likes || 0) + (on ? 1 : -1));
+    showLikes();
+    const req = ++likeReq;
+    fetch(`/api/likes/${slug}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ liked: on }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d && req === likeReq) showLikes(d); })
+      .catch(() => {});
     if (!useMotion) return;
     M.animate(likeBtn.querySelector("svg"), { scale: on ? [0.6, 1.35, 1] : [1, 0.8, 1] }, { duration: 0.45 });
     if (on) {

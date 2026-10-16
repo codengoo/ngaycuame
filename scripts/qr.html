@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- Build helper page (not deployed): draws the printable QR card of each kid
+     (white rounded card, QR code, name below) on a transparent PNG.
+     Driven by scripts/build.mjs through headless Chrome. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Quicksand:wght@700&display=block">
+</head>
+<body>
+<script>
+  // Card layout in units; the PNG is SCALE px per unit
+  const SCALE = 4;
+  const W = 220, PAD = 18, QR = W - 2 * PAD, GAP = 10, TEXT = 26, BOTTOM = 18, RADIUS = 18;
+  const H = PAD + QR + GAP + TEXT + BOTTOM;
+  const FONT = '700 %spx "Quicksand", system-ui, sans-serif';
+
+  // modules: rows of 0/1 from the qrcode package (no quiet zone – the card's padding is one)
+  async function renderQrCard(modules, name) {
+    await document.fonts.load(FONT.replace("%s", 22), name);
+    const c = document.createElement("canvas");
+    c.width = W * SCALE; c.height = H * SCALE;
+    const g = c.getContext("2d");
+    g.scale(SCALE, SCALE);
+
+    // Card with a hairline edge so it still shows on white paper
+    g.beginPath();
+    g.roundRect(0.5, 0.5, W - 1, H - 1, RADIUS);
+    g.fillStyle = "#fff";
+    g.fill();
+    g.lineWidth = 1;
+    g.strokeStyle = "#e3e3e3";
+    g.stroke();
+
+    // Modules snapped to whole pixels so neighbours touch without seams
+    const n = modules.length, px = (QR * SCALE) / n;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = "#000";
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) {
+        if (!modules[y][x]) continue;
+        const x0 = Math.round(PAD * SCALE + x * px), y0 = Math.round(PAD * SCALE + y * px);
+        g.fillRect(x0, y0, Math.round(PAD * SCALE + (x + 1) * px) - x0, Math.round(PAD * SCALE + (y + 1) * px) - y0);
+      }
+    }
+
+    // Name, shrunk to fit long names
+    g.scale(SCALE, SCALE);
+    let size = 22;
+    g.font = FONT.replace("%s", size);
+    while (g.measureText(name).width > QR && size > 12) g.font = FONT.replace("%s", --size);
+    g.fillStyle = "#111";
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText(name, W / 2, PAD + QR + GAP + TEXT / 2);
+
+    return c.toDataURL("image/png");
+  }
+</script>
+</body>
+</html>
