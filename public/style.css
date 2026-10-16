@@ -521,14 +521,26 @@ html.intro-open body { overflow: hidden; }
   font-size: clamp(2.7rem, 12.5vw, 4rem);
   line-height: 1.15;
   color: var(--ink);
-  background: linear-gradient(110deg, var(--ink) 0%, var(--ink) 42%, #fff 50%, var(--ink) 58%, var(--ink) 100%);
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-          background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer 3.2s ease-in-out 1.6s infinite;
 }
 .intro__title .ic { display: inline-block; white-space: pre; }
+/* Light sweep: a separate single-text overlay. Clipping a gradient to text
+   whose letters are animated inline-blocks makes the letters invisible in
+   Safari, so the real letters stay a solid colour and only this layer shines. */
+.intro__title { position: relative; }
+.intro__title::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  background: linear-gradient(110deg, transparent 0%, transparent 42%, rgba(255, 255, 255, .85) 50%, transparent 58%, transparent 100%);
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+          background-clip: text;
+  animation: shimmer 3.2s ease-in-out 2.6s infinite;
+}
 
 .intro__from {
   margin-top: 6px;
