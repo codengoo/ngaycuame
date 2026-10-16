@@ -8,17 +8,32 @@ kids/<duong-dan>/
   kid.json     tên, lời chúc, ngày
   avatar.png   ảnh của cháu (.png / .jpg / .jpeg / .webp)
   audio.m4a    file ghi âm (.m4a / .mp3 / .wav / .ogg / .aac)
+  transcript.json  tự tạo khi build – lời chúc chuyển từ file ghi âm
 ```
 
 ## Thêm cháu mới
 
+Tạo thư mục **đặt theo tên bé (có dấu)**, chép vào 1 ảnh và 1 file ghi âm – tên file gì cũng được:
+
 ```
-npm run new-kid -- "Minh Anh"        # tạo kids/minh-anh/kid.json
-# chép ảnh  → kids/minh-anh/avatar.jpg
-# chép audio → kids/minh-anh/audio.m4a
-npm run build                         # tạo trang public/minh-anh/
-npm run deploy                        # build + đưa lên Cloudflare
+kids/Minh Anh/
+  IMG_0123.jpg
+  Ghi âm mới.m4a
 ```
+
+```
+npm run build      # tạo trang public/minh-anh/
+npm run deploy     # build + đưa lên Cloudflare
+```
+
+Khi build, thư mục được tự sắp xếp lại:
+
+- `kids/Minh Anh/` → `kids/minh-anh/` (đường dẫn trang), tên "Minh Anh" ghi vào `kid.json`.
+  Nếu thư mục đặt sẵn kiểu `minh-anh` thì tên thành "Minh Anh" không dấu – sửa lại trong `kid.json`.
+- Ảnh → `avatar.*`, ghi âm → `audio.*`. Mỗi thư mục chỉ để **1** ảnh và **1** file ghi âm.
+- Chưa có `kid.json` thì tự tạo; lời chúc lấy từ ghi âm (`transcript.json`).
+
+(`npm run new-kid -- "Minh Anh"` vẫn dùng được nếu muốn tạo sẵn thư mục.)
 
 ## kid.json
 
@@ -32,9 +47,27 @@ npm run deploy                        # build + đưa lên Cloudflare
 ```
 
 - `name` – tên hiển thị ("của bé …", "Con của mẹ, …", tiêu đề khi chia sẻ link).
-- `wish` – lời chúc (nội dung ghi âm). `\n` để xuống dòng. Chữ được tô dần khi phát audio.
+- `wish` – tuỳ chọn, lời chúc gõ tay (nội dung ghi âm). `\n` để xuống dòng. Chữ được tô dần khi phát audio.
+  Bỏ trống thì dùng lời chúc tự chuyển từ ghi âm (xem dưới).
 - `date` – ngày dưới tên (mặc định `20/10/2026`).
 - `avatarFocus` – tuỳ chọn, vị trí giữ lại khi cắt ảnh tròn (`"50% 20%"` = lấy cao hơn, ví dụ khi mặt ở sát trên).
+
+## Lời chúc tự chuyển từ ghi âm
+
+`npm run build` gửi file ghi âm lên Cloudflare Workers AI (Whisper) và lưu kết quả vào
+`kids/<cháu>/transcript.json`:
+
+```json
+{ "audioHash": "…", "text": "Mẹ Ly ơi, con chúc mẹ 20/10 vui vẻ và xinh đẹp.\nCon yêu mẹ nhiều lắm ạ." }
+```
+
+- Chỉ chạy lại khi file ghi âm thay đổi, nên có thể **sửa tay `text`** (máy hay nghe sai giọng trẻ con) – bản sửa được giữ.
+- Xoá `transcript.json` để chuyển lại từ đầu.
+- Dùng tài khoản đã `npx wrangler login`, hoặc biến môi trường `CLOUDFLARE_API_TOKEN` (quyền Workers AI) + `CLOUDFLARE_ACCOUNT_ID`.
+- Không kết nối được thì build vẫn chạy (chỉ cảnh báo), trừ khi cháu đó chưa có lời chúc nào.
+- Nếu `kid.json` có `wish` thì trang dùng `wish`, không dùng transcript.
+- `words` là thời điểm của từng từ trong ghi âm, dùng để tô chữ lời chúc kiểu karaoke. Máy nghe sai vài
+  chữ vẫn khớp được; nếu lời chúc khác hẳn ghi âm thì chữ chạy theo sóng âm như cũ (build có cảnh báo).
 
 ## Ảnh
 

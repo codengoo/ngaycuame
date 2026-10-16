@@ -296,6 +296,8 @@
   // ----- Lyric reveal: split the wish into characters -----
   const wish = $(".wish");
   const chars = [];
+  const wishWords = []; // character spans grouped per whitespace-separated word
+  let inWord = false;
   const splitChars = (root) => {
     Array.from(root.childNodes).forEach((node) => {
       if (node.nodeType === Node.ELEMENT_NODE) { splitChars(node); return; }
@@ -304,28 +306,49 @@
       // Collapse the source indentation so the text wraps like normal prose
       const text = node.textContent.replace(/\s+/g, " ");
       for (const ch of text) {
-        if (ch === " ") { frag.appendChild(document.createTextNode(" ")); continue; }
+        if (ch === " ") { frag.appendChild(document.createTextNode(" ")); inWord = false; continue; }
         const s = document.createElement("span");
         s.className = "c";
         s.textContent = ch;
         frag.appendChild(s);
         chars.push(s);
+        if (!inWord) wishWords.push([]);
+        wishWords[wishWords.length - 1].push(s);
+        inWord = true;
       }
       node.replaceWith(frag);
     });
   };
   splitChars(wish);
   const charFill = new Array(chars.length).fill(-1);
+  const setFill = (i, amount) => {
+    const f = Math.round(Math.min(1, Math.max(0, amount)) * 100);
+    if (f !== charFill[i]) {
+      charFill[i] = f;
+      chars[i].style.setProperty("--f", f + "%");
+    }
+  };
+
+  // Per-word [start, end] seconds from the build-time transcript; when missing
+  // (or out of sync with the text) the reveal follows the waveform instead.
+  let timing = null;
+  try { timing = JSON.parse(wish.dataset.timing || "null"); } catch {}
+  if (!Array.isArray(timing) || timing.length !== wishWords.length) timing = null;
 
   const paintLyric = (amount) => {
     // amount: 0–1 of the text revealed; the boundary character is part-filled
     const pos = amount * chars.length;
-    chars.forEach((c, i) => {
-      const f = Math.round(Math.min(1, Math.max(0, pos - i)) * 100);
-      if (f !== charFill[i]) {
-        charFill[i] = f;
-        c.style.setProperty("--f", f + "%");
-      }
+    chars.forEach((c, i) => setFill(i, pos - i));
+  };
+
+  // Karaoke: each word fills across its own spoken time span
+  const paintLyricAt = (t) => {
+    let i = 0;
+    wishWords.forEach((cs, w) => {
+      const [s, e] = timing[w];
+      const pos = (e > s ? (t - s) / (e - s) : t >= s ? 1 : 0) * cs.length;
+      cs.forEach((c, k) => setFill(i + k, pos - k));
+      i += cs.length;
     });
   };
 
@@ -335,7 +358,9 @@
     // Before the first play (and after it ends) the wish stays fully readable
     const started = !audio.paused || audio.currentTime > 0;
     wish.classList.toggle("is-revealing", started);
-    paintLyric(started ? spokenAt(p) : 1);
+    if (!started) paintLyric(1);
+    else if (timing) paintLyricAt(audio.currentTime);
+    else paintLyric(spokenAt(p));
     wave.setAttribute("aria-valuenow", String(Math.round(p * 100)));
     timeEl.textContent = audio.paused && audio.currentTime === 0
       ? fmt(audio.duration)
@@ -480,7 +505,7 @@
     const cy = r.top + r.height / 2;
     for (let i = 0; i < n; i++) {
       const h = document.createElement("span");
-      h.textContent = "♥";
+      h.textContent = "♥︎";
       h.style.left = cx + "px";
       h.style.top = cy + "px";
       h.style.fontSize = 10 + Math.random() * 8 + "px";
@@ -502,7 +527,7 @@
     const H = window.innerHeight;
     for (let i = 0; i < n; i++) {
       const h = document.createElement("span");
-      h.textContent = Math.random() > 0.3 ? "♥" : "♡";
+      h.textContent = Math.random() > 0.3 ? "♥︎" : "♡︎";
       h.style.left = Math.random() * 100 + "vw";
       h.style.fontSize = 10 + Math.random() * 18 + "px";
       rain.appendChild(h);
@@ -549,7 +574,7 @@
   // A steady stream of hearts floating up
   const spawnHeart = () => {
     const h = document.createElement("span");
-    h.textContent = Math.random() > 0.35 ? "♥" : "♡";
+    h.textContent = Math.random() > 0.35 ? "♥︎" : "♡︎";
     h.style.left = Math.random() * 100 + "%";
     h.style.fontSize = 12 + Math.random() * 22 + "px";
     h.style.setProperty("--x", (Math.random() - 0.5) * 160 + "px");

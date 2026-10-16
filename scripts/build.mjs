@@ -1,8 +1,11 @@
 // Builds one greeting page per kid.
 //
-//   kids/<slug>/kid.json      { "name", "wish", "date"?, "avatarFocus"? }
-//   kids/<slug>/avatar.*      png / jpg / jpeg / webp
-//   kids/<slug>/audio.*       m4a / mp3 / wav / ogg / aac
+//   kids/<slug>/kid.json      { "name", "wish"?, "date"?, "avatarFocus"? } – created if missing
+//   kids/<slug>/avatar.*      png / jpg / jpeg / webp    (any file name; renamed)
+//   kids/<slug>/audio.*       m4a / mp3 / wav / ogg / aac (any file name; renamed)
+//   kids/<slug>/transcript.json  generated from audio.* (see transcribe.mjs);
+//                             used as the wish when kid.json has none, and for
+//                             the per-word timing of the karaoke reveal
 //
 // Output (all under public/, served as static assets):
 //   public/<slug>/index.html, avatar.webp, og.jpg, audio.<ext>
@@ -11,10 +14,12 @@
 //
 // Needs a local Chrome/Edge (set CHROME_PATH if it isn't found).
 import { createHash } from "node:crypto";
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, extname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { withChrome } from "./chrome.mjs";
+import { isSlug, slugify, titleFromSlug } from "./slug.mjs";
+import { alignWish, transcribeKids } from "./transcribe.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const KIDS_DIR = join(ROOT, "kids");
@@ -36,28 +41,66 @@ const esc = (s) => String(s)
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
   .replace(/"/g, "&quot;");
 const hash = (buf) => createHash("sha1").update(buf).digest("hex").slice(0, 8);
-const findFile = (dir, base, exts) => exts.map((e) => join(dir, base + e)).find((p) => existsSync(p));
 const fail = (msg) => { console.error(`✖ ${msg}`); process.exit(1); };
 
 // ---------- Read kids ----------
+// A new kid only needs a folder with one image and one recording, e.g.
+// kids/Huyền My/{IMG_0123.png, Huyền My.m4a}. It is tidied up in place:
+// the folder becomes kids/huyen-my/ (its original name is kept as the kid's
+// name), the files become avatar.* / audio.*, and kid.json is created.
+
+// The single file of a kind in the folder, renamed to <base>.<ext>
+const claimFile = (dir, label, base, exts) => {
+  const found = readdirSync(dir).filter((f) => exts.includes(extname(f).toLowerCase()));
+  if (!found.length) fail(`kids/${label}/: chưa có ${base === "avatar" ? "ảnh" : "file ghi âm"} (${exts.join(" ")})`);
+  if (found.length > 1) fail(`kids/${label}/: có ${found.length} file ${base === "avatar" ? "ảnh" : "ghi âm"} (${found.join(", ")}) – chỉ để lại 1 file`);
+  const target = base + extname(found[0]).toLowerCase();
+  if (found[0] !== target) {
+    renameSync(join(dir, found[0]), join(dir, target));
+    console.log(`↻ kids/${label}/${found[0]} → ${target}`);
+  }
+  return join(dir, target);
+};
+
 const kids = readdirSync(KIDS_DIR, { withFileTypes: true })
   .filter((d) => d.isDirectory())
   .map((d) => d.name)
   .sort()
-  .map((slug) => {
+  .map((folder) => {
+    let slug = folder;
+    if (!isSlug(folder)) {
+      slug = slugify(folder);
+      if (!slug) fail(`Không đặt được đường dẫn cho thư mục kids/${folder}/ – đổi tên thư mục`);
+      if (existsSync(join(KIDS_DIR, slug))) fail(`kids/${folder}/ sẽ thành kids/${slug}/ nhưng thư mục đó đã có`);
+      renameSync(join(KIDS_DIR, folder), join(KIDS_DIR, slug));
+      console.log(`↻ kids/${folder}/ → kids/${slug}/`);
+    }
     const dir = join(KIDS_DIR, slug);
-    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) fail(`Tên thư mục "${slug}" chỉ được dùng chữ thường không dấu, số và dấu gạch ngang.`);
+    const avatar = claimFile(dir, slug, "avatar", AVATAR_EXT);
+    const audio = claimFile(dir, slug, "audio", Object.keys(AUDIO_TYPES));
     const jsonPath = join(dir, "kid.json");
-    if (!existsSync(jsonPath)) fail(`Thiếu kids/${slug}/kid.json`);
+    if (!existsSync(jsonPath)) {
+      const name = folder === slug ? titleFromSlug(slug) : folder.trim();
+      writeFileSync(jsonPath, JSON.stringify({ name, date: "20/10/2026" }, null, 2) + "\n");
+      console.log(`✚ Đã tạo kids/${slug}/kid.json – tên "${name}"${folder === slug ? " (sửa lại nếu thiếu dấu)" : ""}`);
+    }
     const kid = JSON.parse(readFileSync(jsonPath, "utf8"));
     if (!kid.name?.trim()) fail(`kids/${slug}/kid.json: thiếu "name"`);
-    if (!kid.wish?.trim()) fail(`kids/${slug}/kid.json: thiếu "wish" (lời chúc)`);
-    const avatar = findFile(dir, "avatar", AVATAR_EXT) || fail(`Thiếu ảnh kids/${slug}/avatar.(png|jpg|webp)`);
-    const audio = findFile(dir, "audio", Object.keys(AUDIO_TYPES)) || fail(`Thiếu file ghi âm kids/${slug}/audio.(m4a|mp3|wav|ogg|aac)`);
     return { slug, dir, avatar, audio, ...kid };
   });
 
 if (!kids.length) fail("Chưa có cháu nào trong thư mục kids/");
+
+// ---------- Transcripts ----------
+await transcribeKids(kids, hash);
+for (const kid of kids) {
+  kid.wish = kid.wish?.trim() || kid.transcript?.text?.trim();
+  if (!kid.wish) fail(`kids/${kid.slug}/: chưa có lời chúc – thêm "wish" vào kid.json hoặc "text" vào transcript.json`);
+  // [start, end] seconds per word of the wish; without it the page follows the waveform
+  kid.timing = alignWish(kid.wish, kid.transcript?.words);
+  if (kid.transcript && !kid.timing) console.warn(`⚠ kids/${kid.slug}/: lời chúc khác nhiều so với ghi âm – chữ sẽ chạy theo sóng âm`);
+}
+
 const defaultKid = kids.find((k) => k.slug === site.defaultKid) || kids[0];
 
 // ---------- Remove pages of kids that were deleted ----------
@@ -123,6 +166,7 @@ const render = (kid, pageUrl) => {
     NAME: esc(kid.name),
     WISH_HTML: lines.map(esc).join("<br>\n        "),
     WISH_ONE_LINE: esc(oneLine),
+    WISH_TIMING: kid.timing ? esc(JSON.stringify(kid.timing)) : "",
     DATE: esc(kid.date || "20/10/2026"),
     PAGE_URL: esc(pageUrl),
     OG_IMAGE_URL: esc(ogUrl),

@@ -199,6 +199,7 @@ body {
 .headline { position: relative; }
 .headline .hc { display: inline-block; }
 .headline__heart { color: var(--rose); font-size: .85em; display: inline-block; }
+.heart-ico { width: 1em; height: 1em; fill: currentColor; vertical-align: -.1em; }
 
 .lead {
   margin-top: 14px;
