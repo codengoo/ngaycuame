@@ -1,12 +1,12 @@
 {
   "audioHash": "05568c96",
-  "text": "Mẹ Mai ơi, coi nhau mẹ Mai rất nhiều lắm.\nCon chúc mẹ 20 tháng 10 xinh đẹp và xinh gái.\nChúc em bé và mẹ xinh đẹp ạ.",
+  "text": "Mẹ Mai ơi, con yêu mẹ Mai rất nhiều lắm.\nCon chúc mẹ 20 tháng 10 xinh đẹp và xinh gái.\nChúc em bé và mẹ xinh đẹp ạ.",
   "words": [
     ["Mẹ",0,0.36],
     ["Mai",0.36,0.62],
     ["ơi,",0.62,0.96],
-    ["coi",1.24,1.46],
-    ["nhau",1.46,1.6],
+    ["con",1.24,1.46],
+    ["yêu",1.46,1.6],
     ["mẹ",1.6,1.8],
     ["Mai",1.8,2.02],
     ["rất",2.02,2.32],

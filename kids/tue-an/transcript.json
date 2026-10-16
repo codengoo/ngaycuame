@@ -1,11 +1,11 @@
 {
   "audioHash": "9aaa9291",
-  "text": "Con yêu mẹ tranh rất nhiều.\nCon cảm ơn mẹ đã sinh ra con.\nChúc mẹ 20 tháng 10 và xinh đẹp.",
+  "text": "Con yêu mẹ Thanh rất nhiều.\nCon cảm ơn mẹ đã sinh ra con.\nChúc mẹ 20 tháng 10 thật xinh đẹp.",
   "words": [
     ["Con",0,0.38],
     ["yêu",0.38,0.72],
     ["mẹ",0.72,1],
-    ["tranh",1,1.38],
+    ["Thanh",1,1.38],
     ["rất",1.38,1.6],
     ["nhiều.",1.6,2.24],
     ["Con",2.6,3.24],
@@ -21,7 +21,7 @@
     ["20",8.46,9.36],
     ["tháng",9.36,9.86],
     ["10",9.86,10.12],
-    ["và",10.12,10.46],
+    ["thật",10.12,10.46],
     ["xinh",10.46,10.9],
     ["đẹp.",10.9,11.54]
   ]
