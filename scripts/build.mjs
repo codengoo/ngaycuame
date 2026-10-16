@@ -96,12 +96,20 @@ const kids = readdirSync(KIDS_DIR, { withFileTypes: true })
     const audio = claimFile(dir, slug, "audio", Object.keys(AUDIO_TYPES));
     const jsonPath = join(dir, "kid.json");
     if (!existsSync(jsonPath)) {
-      const name = folder === slug ? titleFromSlug(slug) : folder.trim();
+      const name = folder === slug ? titleFromSlug(slug) : folder.trim().normalize("NFC");
       writeFileSync(jsonPath, JSON.stringify({ name, date: "20/10/2026" }, null, 2) + "\n");
       console.log(`✚ Đã tạo kids/${slug}/kid.json – tên "${name}"${folder === slug ? " (sửa lại nếu thiếu dấu)" : ""}`);
     }
     const kid = JSON.parse(readFileSync(jsonPath, "utf8"));
     if (!kid.name?.trim()) fail(`kids/${slug}/kid.json: thiếu "name"`);
+    // Text from Mac/iPhone file names is often decomposed (NFD: "u" + separate accents);
+    // iOS then can't draw the accents in the handwritten fonts, so keep everything composed
+    const composed = { ...kid, name: kid.name.normalize("NFC"), ...(kid.wish && { wish: kid.wish.normalize("NFC") }) };
+    if (composed.name !== kid.name || composed.wish !== kid.wish) {
+      writeFileSync(jsonPath, JSON.stringify(composed, null, 2) + "\n");
+      Object.assign(kid, composed);
+      console.log(`↻ kids/${slug}/kid.json: chuẩn hoá dấu tiếng Việt (NFC) cho "${kid.name}"`);
+    }
     // Boy or girl: guessed once from the name and saved, so it can be corrected by hand
     if (!kid.gender) {
       const g = guessGender(kid.name);
@@ -120,7 +128,7 @@ if (!kids.length) fail("Chưa có cháu nào trong thư mục kids/");
 // ---------- Transcripts ----------
 await transcribeKids(kids, hash);
 for (const kid of kids) {
-  kid.wish = kid.wish?.trim() || kid.transcript?.text?.trim();
+  kid.wish = (kid.wish?.trim() || kid.transcript?.text?.trim())?.normalize("NFC");
   if (!kid.wish) fail(`kids/${kid.slug}/: chưa có lời chúc – thêm "wish" vào kid.json hoặc "text" vào transcript.json`);
   // [start, end] seconds per word of the wish; without it the page follows the waveform
   kid.timing = alignWish(kid.wish, kid.transcript?.words);
