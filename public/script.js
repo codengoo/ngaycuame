@@ -297,13 +297,16 @@
       }, { amount: 0.4 });
     };
 
-    // --- Gentle parallax on the hero while scrolling ---
+    // --- Gentle parallax on the hero while scrolling (mouse/trackpad only: on touch
+    // screens it fights the momentum scroll and is barely visible anyway) ---
     const hero = $("#hero");
-    scroll(() => {
-      const y = window.scrollY;
-      hero.style.transform = `translateY(${y * 0.18}px)`;
-      hero.style.opacity = String(Math.max(0.35, 1 - y / 900));
-    });
+    if (!touchScreen) {
+      scroll(() => {
+        const y = window.scrollY;
+        hero.style.transform = `translateY(${y * 0.18}px)`;
+        hero.style.opacity = String(Math.max(0.35, 1 - y / 900));
+      });
+    }
 
     // --- Card tilt on mouse ---
     if (window.matchMedia("(hover: hover)").matches) {

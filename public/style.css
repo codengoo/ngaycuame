@@ -67,6 +67,13 @@ body {
   background: transparent;
   overflow-x: hidden;
 }
+/* Clip the decorations that stick out sideways on the page itself: overflow-x on
+   <body> is a known cause of scroll jumps on iOS (fling → back to the top).
+   Older Safari without "clip" keeps the body rule above. */
+@supports (overflow-x: clip) {
+  body { overflow-x: visible; }
+  .page { overflow-x: clip; }
+}
 
 .page {
   width: 100%;
