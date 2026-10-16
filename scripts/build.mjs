@@ -24,6 +24,10 @@ const MANIFEST = join(ROOT, "scripts", ".generated.json");
 const site = JSON.parse(readFileSync(join(ROOT, "site.json"), "utf8"));
 const baseUrl = site.baseUrl.replace(/\/+$/, "");
 const template = readFileSync(join(ROOT, "template", "index.html"), "utf8");
+// Shared CSS/JS get a content hash in their URL so browsers pick up new versions right away
+const assetVersion = (file) => createHash("sha1").update(readFileSync(join(ROOT, "public", file))).digest("hex").slice(0, 8);
+const CSS_V = assetVersion("style.css");
+const JS_V = assetVersion("script.js");
 
 const AVATAR_EXT = [".png", ".jpg", ".jpeg", ".webp"];
 const AUDIO_TYPES = { ".m4a": "audio/mp4", ".mp3": "audio/mpeg", ".wav": "audio/wav", ".ogg": "audio/ogg", ".aac": "audio/aac" };
@@ -127,6 +131,8 @@ const render = (kid, pageUrl) => {
     AVATAR_H: String(kid.avatarH),
     AVATAR_FOCUS: esc(kid.avatarFocus || "50% 30%"),
     AUDIO_URL: esc(audioUrl),
+    CSS_V,
+    JS_V,
     BODY_CLASS: kid.isPhoto ? "kid-photo" : "kid-illustration",
     ROBOTS: site.indexable === false ? "noindex, nofollow" : "index, follow, max-image-preview:large",
     // "</" is escaped so a wish can never close the <script> tag
