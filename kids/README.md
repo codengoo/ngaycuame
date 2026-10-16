@@ -13,7 +13,7 @@ kids/<duong-dan>/
 
 ## Thêm cháu mới
 
-Tạo thư mục **đặt theo tên bé (có dấu)**, chép vào 1 ảnh và 1 file ghi âm – tên file gì cũng được:
+Tạo thư mục **đặt theo tên bé (có dấu)**, chép vào 1 file ghi âm (và 1 ảnh nếu có) – tên file gì cũng được:
 
 ```
 kids/Minh Anh/
@@ -31,6 +31,7 @@ Khi build, thư mục được tự sắp xếp lại:
 - `kids/Minh Anh/` → `kids/minh-anh/` (đường dẫn trang), tên "Minh Anh" ghi vào `kid.json`.
   Nếu thư mục đặt sẵn kiểu `minh-anh` thì tên thành "Minh Anh" không dấu – sửa lại trong `kid.json`.
 - Ảnh → `avatar.*`, ghi âm → `audio.*`. Mỗi thư mục chỉ để **1** ảnh và **1** file ghi âm.
+  Không có ảnh thì dùng hình minh hoạ chung `template/avatar.png`.
 - Chưa có `kid.json` thì tự tạo; lời chúc lấy từ ghi âm (`transcript.json`).
 
 (`npm run new-kid -- "Minh Anh"` vẫn dùng được nếu muốn tạo sẵn thư mục.)

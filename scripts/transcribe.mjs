@@ -15,6 +15,10 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const MODEL = "@cf/openai/whisper-large-v3-turbo";
+// Short context only: it fixes "20 tháng 10" and stops Whisper from inventing
+// YouTube outros on unclear speech. A full sample wish made it copy the sample
+// and drop the mums' names.
+const PROMPT = "Lời chúc ngày 20 tháng 10 của con gửi mẹ.";
 
 const wrangler = (args) => JSON.parse(execSync(`npx wrangler ${args} --json`, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }));
 
@@ -31,7 +35,7 @@ const whisper = async (audioBuf) => {
   const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${MODEL}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ audio: audioBuf.toString("base64"), language: "vi" }),
+    body: JSON.stringify({ audio: audioBuf.toString("base64"), language: "vi", initial_prompt: PROMPT }),
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || !json.success) throw new Error(json.errors?.map((e) => e.message).join("; ") || `HTTP ${res.status}`);

@@ -1,11 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/anh-duc/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/anh-khoa/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/bao-lam/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/hoang-yen/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
     <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/huyen-my/</loc>
     <lastmod>2026-10-16</lastmod>
   </url>
   <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/mai-ngoc/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/manh-truong/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/minh-huy/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/minh-tri/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/nhat-minh/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/phuc-anh/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/phuong-linh/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
     <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/tan-phat/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/tue-an/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/tue-lam/</loc>
+    <lastmod>2026-10-16</lastmod>
+  </url>
+  <url>
+    <loc>https://loi-chuc-gui-me.nghiadt.workers.dev/tuong-san/</loc>
     <lastmod>2026-10-16</lastmod>
   </url>
 </urlset>

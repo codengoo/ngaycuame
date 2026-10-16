@@ -1,7 +1,7 @@
 // Builds one greeting page per kid.
 //
 //   kids/<slug>/kid.json      { "name", "wish"?, "date"?, "avatarFocus"? } – created if missing
-//   kids/<slug>/avatar.*      png / jpg / jpeg / webp    (any file name; renamed)
+//   kids/<slug>/avatar.*      png / jpg / jpeg / webp    (any file name; renamed; optional)
 //   kids/<slug>/audio.*       m4a / mp3 / wav / ogg / aac (any file name; renamed)
 //   kids/<slug>/transcript.json  generated from audio.* (see transcribe.mjs);
 //                             used as the wish when kid.json has none, and for
@@ -34,6 +34,8 @@ const assetVersion = (file) => createHash("sha1").update(readFileSync(join(ROOT,
 const CSS_V = assetVersion("style.css");
 const JS_V = assetVersion("script.js");
 
+// Illustration for kids without their own photo
+const DEFAULT_AVATAR = join(ROOT, "template", "avatar.png");
 const AVATAR_EXT = [".png", ".jpg", ".jpeg", ".webp"];
 const AUDIO_TYPES = { ".m4a": "audio/mp4", ".mp3": "audio/mpeg", ".wav": "audio/wav", ".ogg": "audio/ogg", ".aac": "audio/aac" };
 
@@ -44,14 +46,16 @@ const hash = (buf) => createHash("sha1").update(buf).digest("hex").slice(0, 8);
 const fail = (msg) => { console.error(`✖ ${msg}`); process.exit(1); };
 
 // ---------- Read kids ----------
-// A new kid only needs a folder with one image and one recording, e.g.
-// kids/Huyền My/{IMG_0123.png, Huyền My.m4a}. It is tidied up in place:
+// A new kid only needs a folder with a recording (and optionally one image,
+// otherwise template/avatar.png is used), e.g. kids/Huyền My/{IMG_0123.png, Huyền My.m4a}. It is tidied up in place:
 // the folder becomes kids/huyen-my/ (its original name is kept as the kid's
 // name), the files become avatar.* / audio.*, and kid.json is created.
 
-// The single file of a kind in the folder, renamed to <base>.<ext>
-const claimFile = (dir, label, base, exts) => {
+// The single file of a kind in the folder, renamed to <base>.<ext>;
+// `fallback` is used when the folder has none
+const claimFile = (dir, label, base, exts, fallback) => {
   const found = readdirSync(dir).filter((f) => exts.includes(extname(f).toLowerCase()));
+  if (!found.length && fallback) return fallback;
   if (!found.length) fail(`kids/${label}/: chưa có ${base === "avatar" ? "ảnh" : "file ghi âm"} (${exts.join(" ")})`);
   if (found.length > 1) fail(`kids/${label}/: có ${found.length} file ${base === "avatar" ? "ảnh" : "ghi âm"} (${found.join(", ")}) – chỉ để lại 1 file`);
   const target = base + extname(found[0]).toLowerCase();
@@ -76,7 +80,7 @@ const kids = readdirSync(KIDS_DIR, { withFileTypes: true })
       console.log(`↻ kids/${folder}/ → kids/${slug}/`);
     }
     const dir = join(KIDS_DIR, slug);
-    const avatar = claimFile(dir, slug, "avatar", AVATAR_EXT);
+    const avatar = claimFile(dir, slug, "avatar", AVATAR_EXT, DEFAULT_AVATAR);
     const audio = claimFile(dir, slug, "audio", Object.keys(AUDIO_TYPES));
     const jsonPath = join(dir, "kid.json");
     if (!existsSync(jsonPath)) {
