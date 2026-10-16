@@ -11,12 +11,14 @@
 //   public/<slug>/index.html, avatar.webp, og.jpg, audio.<ext>
 //   public/index.html, og.jpg = list of all kids (template/home.html)
 //   public/sitemap.xml, public/robots.txt
+//   QR/<slug>.png = QR code (transparent background) of each kid's prod link – not deployed, git-ignored
 //
 // Needs a local Chrome/Edge (set CHROME_PATH if it isn't found).
 import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, extname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import QRCode from "qrcode";
 import { withChrome } from "./chrome.mjs";
 import { isSlug, slugify, titleFromSlug } from "./slug.mjs";
 import { alignWish, transcribeKids } from "./transcribe.mjs";
@@ -25,6 +27,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const KIDS_DIR = join(ROOT, "kids");
 const PUBLIC = join(ROOT, "public");
 const MANIFEST = join(ROOT, "scripts", ".generated.json");
+const QR_DIR = join(ROOT, "QR");
 
 const site = JSON.parse(readFileSync(join(ROOT, "site.json"), "utf8"));
 const baseUrl = site.baseUrl.replace(/\/+$/, "");
@@ -269,6 +272,18 @@ if (site.indexable === false) {
   writeFileSync(join(PUBLIC, "robots.txt"), `User-agent: *\nAllow: /\n\nSitemap: ${baseUrl}/sitemap.xml\n`);
 }
 
+// ---------- QR codes of the prod links (rebuilt from scratch so deleted kids disappear) ----------
+rmSync(QR_DIR, { recursive: true, force: true });
+mkdirSync(QR_DIR);
+for (const kid of kids) {
+  await QRCode.toFile(join(QR_DIR, `${kid.slug}.png`), `${baseUrl}/${kid.slug}/`, {
+    width: 1024,
+    margin: 2,
+    errorCorrectionLevel: "M",
+    color: { dark: "#000000ff", light: "#00000000" },
+  });
+}
+
 writeFileSync(MANIFEST, JSON.stringify(kids.map((k) => k.slug), null, 2) + "\n");
 
 console.log(`✔ Đã tạo ${kids.length} trang:`);
@@ -276,3 +291,4 @@ for (const k of kids) {
   console.log(`  ${k.name.padEnd(16)} ${baseUrl}/${k.slug}/  (${k.isPhoto ? "ảnh chụp" : "ảnh minh hoạ"})`);
 }
 console.log(`  Trang chủ  ${baseUrl}/  – danh sách ${kids.length} bé`);
+console.log(`  Mã QR      QR/<tên>.png – ${kids.length} file`);

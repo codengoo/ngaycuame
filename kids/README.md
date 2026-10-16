@@ -1,7 +1,7 @@
 # Thêm / sửa trang cho từng cháu
 
 Mỗi cháu là một thư mục trong `kids/`. Tên thư mục chính là đường dẫn trang:
-`kids/tan-phat/` → `https://loi-chuc-gui-me.nghiadt.workers.dev/tan-phat/`
+`kids/tan-phat/` → `https://guimecuacon.nghiacn.cloud/tan-phat/`
 
 ```
 kids/<duong-dan>/

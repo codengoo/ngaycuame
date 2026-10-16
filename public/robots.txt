@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://loi-chuc-gui-me.nghiadt.workers.dev/sitemap.xml
+Sitemap: https://guimecuacon.nghiacn.cloud/sitemap.xml
